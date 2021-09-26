@@ -8,11 +8,10 @@ import (
 )
 
 var (
-	prevRune rune
-	slash    bool
+	prevRune         rune
+	slash            bool
+	ErrInvalidString = errors.New("invalid string")
 )
-
-var ErrInvalidString = errors.New("invalid string")
 
 func unpackRune(curRune rune) (string, error) {
 	var outString strings.Builder
