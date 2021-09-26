@@ -16,32 +16,45 @@ var ErrInvalidString = errors.New("invalid string")
 
 func unpackRune(curRune rune) (string, error) {
 	var outString strings.Builder
-	if !unicode.IsDigit(curRune) {
-		if (curRune != '\\') && (prevRune == '\\') {
+	if unicode.IsDigit(curRune) {
+		if prevRune == 0 {
 			return "", ErrInvalidString
 		}
-		if (curRune != '\\') && (prevRune != 0) {
-			outString.WriteRune(prevRune)
+		if (prevRune == '\\') && !slash {
+			prevRune = curRune
+			return outString.String(), nil
 		}
-		prevRune = curRune
+		if slash {
+			prevRune = '\\'
+		}
+		count, _ := strconv.Atoi(string(curRune))
+		if count != 0 {
+			outString.WriteString(strings.Repeat(string(prevRune), count))
+		}
+		prevRune = 0
 		return outString.String(), nil
 	}
-
-	if prevRune == 0 {
+	if (curRune != '\\') && (prevRune == '\\') {
 		return "", ErrInvalidString
 	}
-	if (prevRune == '\\') && !slash {
+	if (curRune != '\\') && (prevRune != 0) {
+		outString.WriteRune(prevRune)
 		prevRune = curRune
 		return outString.String(), nil
 	}
 	if slash {
-		prevRune = '\\'
+		outString.WriteRune('\\')
+		prevRune = 0
+		slash = false
 	}
-	count, _ := strconv.Atoi(string(curRune))
-	if count != 0 {
-		outString.WriteString(strings.Repeat(string(prevRune), count))
+	if prevRune == '\\' {
+		slash = true
+	} else {
+		if prevRune != 0 {
+			outString.WriteRune(prevRune)
+		}
+		prevRune = curRune
 	}
-	prevRune = 0
 	return outString.String(), nil
 }
 
