@@ -19,7 +19,7 @@ func TestList(t *testing.T) {
 		l := NewList()
 
 		l.PushFront(10) // [10]
-        l.PushBack(20)  // [10, 20]
+		l.PushBack(20)  // [10, 20]
 		l.PushBack(30)  // [10, 20, 30]
 		require.Equal(t, 3, l.Len())
 
@@ -47,5 +47,23 @@ func TestList(t *testing.T) {
 			elems = append(elems, i.Value.(int))
 		}
 		require.Equal(t, []int{70, 80, 60, 40, 10, 30, 50}, elems)
+	})
+
+	t.Run("MoveToFront", func(t *testing.T) {
+		l := NewList()
+		l.PushFront(10)
+		l.PushFront(20)
+		l.PushFront(30)
+
+		l.MoveToFront(l.Back())
+		l.MoveToFront(l.Back())
+		l.MoveToFront(l.Back())
+
+		require.NotNil(t, l.Front())
+		require.NotNil(t, l.Back())
+		require.NotNil(t, l.Front().Next)
+		require.NotNil(t, l.Back().Prev)
+		require.Nil(t, l.Front().Prev)
+		require.Nil(t, l.Back().Next)
 	})
 }
