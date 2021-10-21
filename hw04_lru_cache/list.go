@@ -27,10 +27,7 @@ func (l *list) Len() int {
 }
 
 func (l *list) Front() *ListItem {
-	if l.listLen > 0 {
-		return l.firstItem
-	}
-	return nil
+	return l.firstItem
 }
 
 func (l *list) Back() *ListItem {

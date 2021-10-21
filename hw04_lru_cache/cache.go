@@ -22,30 +22,29 @@ type lruCache struct {
 func (l *lruCache) Set(key Key, value interface{}) bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	var res bool
-	if l.items[key] == nil {
-		item := new(cacheItem)
-		item.key = key
-		item.value = value
 
-		listItem := l.queue.PushFront(item)
-		l.items[key] = listItem
-		res = false
-	} else {
-		l.items[key].Value.(*cacheItem).value = value
-		l.queue.MoveToFront(l.items[key])
-		res = true
+	if l.capacity == 0 {
+		return false
 	}
 
-	if l.queue.Len() > l.capacity {
+	if l.queue.Len() >= l.capacity {
 		listItem := l.queue.Back()
 		item := listItem.Value.(*cacheItem)
 		l.queue.Remove(listItem)
 		delete(l.items, item.key)
-		res = false
 	}
 
-	return res
+	item, ok := l.items[key]
+	if ok {
+		item.Value.(*cacheItem).value = value
+		l.queue.MoveToFront(item)
+		return true
+	}
+
+	cItem := &cacheItem{key, value}
+	listItem := l.queue.PushFront(cItem)
+	l.items[key] = listItem
+	return false
 }
 
 func (l *lruCache) Get(key Key) (interface{}, bool) {
@@ -62,7 +61,6 @@ func (l *lruCache) Get(key Key) (interface{}, bool) {
 func (l *lruCache) Clear() {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	l.capacity = 0
 	l.queue = NewList()
 	l.items = make(map[Key]*ListItem)
 }
