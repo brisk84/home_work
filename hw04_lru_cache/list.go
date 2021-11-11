@@ -60,35 +60,28 @@ func (l *list) MoveToFront(item *ListItem) {
 }
 
 func (l *list) PushBack(v interface{}) *ListItem {
-	item := new(ListItem)
-	item.Value = v
-
+	item := ListItem{v, nil, nil}
 	if l.lastItem == nil {
-		l.lastItem = item
-		l.firstItem = item
-		item.Next = nil
-		item.Prev = nil
+		l.lastItem = &item
+		l.firstItem = &item
 	} else {
-		l.lastItem.Next = item
+		l.lastItem.Next = &item
 		item.Prev = l.lastItem
-		l.lastItem = item
+		l.lastItem = &item
 	}
 	l.listLen++
 	return l.lastItem
 }
 
 func (l *list) PushFront(v interface{}) *ListItem {
-	item := new(ListItem)
-	item.Value = v
+	item := ListItem{v, nil, nil}
 	if l.firstItem == nil {
-		l.lastItem = item
-		l.firstItem = item
-		item.Next = nil
-		item.Prev = nil
+		l.lastItem = &item
+		l.firstItem = &item
 	} else {
-		l.firstItem.Prev = item
+		l.firstItem.Prev = &item
 		item.Next = l.firstItem
-		l.firstItem = item
+		l.firstItem = &item
 	}
 	l.listLen++
 	return l.firstItem
