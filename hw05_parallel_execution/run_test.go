@@ -106,9 +106,9 @@ func TestRun(t *testing.T) {
 			})
 		}
 
-		go func(workersCountLocal int, tasksCountLocal int) {
+		go func() {
 			_ = Run(tasks, workersCount, tasksCount)
-		}(workersCount, tasksCount)
+		}()
 
 		for i := 0; i < tasksCount; i++ {
 			c <- struct{}{}
