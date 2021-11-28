@@ -15,14 +15,17 @@ var (
 )
 
 func ShowProgressbar(progress int) {
-	var progressbar = "----------------------------------------------------------------------------------------------------"
-	progressbar = strings.Replace(progressbar, "-", "+", progress)
+	const (
+		template = "----------------------------------------------------------------------------------------------------"
+	)
+	progressbar := strings.Replace(template, "-", "+", progress)
 	fmt.Printf("\r%v [%d%%]", progressbar, progress)
 }
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
-
-	const bufSize = 64
+	const (
+		bufSize = 64
+	)
 	var (
 		curBufSize  int64
 		bytesCopyed int64
