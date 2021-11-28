@@ -90,4 +90,100 @@ func TestPipeline(t *testing.T) {
 		require.Len(t, result, 0)
 		require.Less(t, int64(elapsed), int64(abortDur)+int64(fault))
 	})
+
+	t.Run("no data", func(t *testing.T) {
+		in := make(Bi)
+		done := make(Bi)
+		data := []int{}
+
+		// Abort after 200ms
+		abortDur := sleepPerStage * 2
+		go func() {
+			<-time.After(abortDur)
+			close(done)
+		}()
+
+		go func() {
+			for _, v := range data {
+				in <- v
+			}
+			close(in)
+		}()
+
+		result := make([]string, 0, 10)
+		start := time.Now()
+		for s := range ExecutePipeline(in, done, stages...) {
+			result = append(result, s.(string))
+		}
+		elapsed := time.Since(start)
+
+		require.Len(t, result, 0)
+		require.Less(t, int64(elapsed), int64(abortDur)+int64(fault))
+	})
+}
+
+func TestPipelineWithoutTimeSleep(t *testing.T) {
+	// Stage generator
+	g2 := func(_ string, f func(v interface{}) interface{}) Stage {
+		return func(in In) Out {
+			out := make(Bi)
+			go func() {
+				defer close(out)
+				for v := range in {
+					out <- f(v)
+				}
+			}()
+			return out
+		}
+	}
+
+	checkDone := make(chan struct{})
+
+	g3 := func(_ string, f func(v interface{}) interface{}) Stage {
+		return func(in In) Out {
+			out := make(Bi)
+			go func() {
+				defer close(out)
+				for v := range in {
+					out <- f(v)
+					checkDone <- struct{}{}
+				}
+			}()
+			return out
+		}
+	}
+
+	stages2 := []Stage{
+		g2("Dummy", func(v interface{}) interface{} { return v }),
+		g2("Multiplier (* 2)", func(v interface{}) interface{} { return v.(int) * 2 }),
+		g2("Adder (+ 100)", func(v interface{}) interface{} { return v.(int) + 100 }),
+		g3("Check Done", func(v interface{}) interface{} { return v.(int) + 200 }),
+		g2("Adder (+ 100)", func(v interface{}) interface{} { return v.(int) + 100 }),
+		g2("Stringifier", func(v interface{}) interface{} { return strconv.Itoa(v.(int)) }),
+	}
+
+	t.Run("done case without time.Sleep", func(t *testing.T) {
+		in := make(Bi)
+		done := make(Bi)
+		data := []int{1}
+
+		go func() {
+			<-checkDone
+			close(done)
+		}()
+
+		go func() {
+			for _, v := range data {
+				in <- v
+			}
+			close(in)
+		}()
+
+		result := make([]string, 0, 10)
+		for s := range ExecutePipeline(in, done, stages2...) {
+			result = append(result, s.(string))
+		}
+
+		require.Len(t, result, 0)
+	})
 }
