@@ -39,15 +39,14 @@ func CheckLen(field interface{}, param interface{}) error {
 	if err != nil {
 		return ErrArgFormatError
 	}
-
 	t := reflect.TypeOf(field)
-	if t.String() == "string" {
+	if t.Kind() == reflect.String {
 		s := field.(string)
 		if len(s) == strLen {
 			return nil
 		}
 		return ErrLenNotEqual
-	} else if t.String() == "[]string" {
+	} else if t.Kind() == reflect.Slice {
 		ss := field.([]string)
 		for _, s := range ss {
 			if len(s) != strLen {
@@ -56,28 +55,26 @@ func CheckLen(field interface{}, param interface{}) error {
 		}
 		return nil
 	}
-	return fmt.Errorf("not string or []string")
+	return ErrArgFormatError
 }
 
 func CheckMin(field interface{}, param interface{}) error {
-	val := field.(int)
 	min, err := strconv.Atoi(param.(string))
 	if err != nil {
 		return err
 	}
-	if val < min {
+	if val := field.(int); val < min {
 		return ErrLessMin
 	}
 	return nil
 }
 
 func CheckMax(field interface{}, param interface{}) error {
-	val := field.(int)
 	max, err := strconv.Atoi(param.(string))
 	if err != nil {
 		return err
 	}
-	if val > max {
+	if val := field.(int); val > max {
 		return ErrMoreMax
 	}
 	return nil
@@ -97,63 +94,65 @@ func CheckRegexp(field interface{}, param interface{}) error {
 	return nil
 }
 
+func CheckValStr(vals []string, val string) bool {
+	for _, v := range vals {
+		if v == val {
+			return true
+		}
+	}
+	return false
+}
+
+func CheckValInt(vals []string, val int) error {
+	for _, v := range vals {
+		intV, err := strconv.Atoi(v)
+		if err != nil {
+			return ErrArgFormatError
+		}
+		if intV == val {
+			return nil
+		}
+	}
+	return ErrNotInRange
+}
+
 func CheckIn(field interface{}, param interface{}) error {
 	val := param.(string)
 	vals := strings.Split(val, ",")
 
-	if reflect.TypeOf(field).String() == "string" {
+	t := reflect.TypeOf(field)
+	if t.Kind() == reflect.String {
 		checkVal := field.(string)
-		for _, v := range vals {
-			if v == checkVal {
-				return nil
-			}
+		if CheckValStr(vals, checkVal) {
+			return nil
 		}
 	}
-
-	if reflect.TypeOf(field).String() == "[]string" {
+	if t.Kind() == reflect.Int {
+		checkVal := field.(int)
+		if err := CheckValInt(vals, checkVal); (!errors.Is(err, ErrNotInRange)) || (err == nil) {
+			return err
+		}
+	}
+	if t.String() == "[]string" {
 		checkVals := field.([]string)
 		for _, checkVal := range checkVals {
-			for _, v := range vals {
-				if v == checkVal {
-					return nil
-				}
-			}
-		}
-	}
-
-	if reflect.TypeOf(field).String() == "int" {
-		checkVal := field.(int)
-		for _, v := range vals {
-			intV, err := strconv.Atoi(v)
-			if err != nil {
-				return ErrArgFormatError
-			}
-			if intV == checkVal {
+			if CheckValStr(checkVals, checkVal) {
 				return nil
 			}
 		}
 	}
-
-	if reflect.TypeOf(field).String() == "[]int" {
+	if t.String() == "[]int" {
 		checkVals := field.([]int)
 		for _, checkVal := range checkVals {
-			for _, v := range vals {
-				intV, err := strconv.Atoi(v)
-				if err != nil {
-					return ErrArgFormatError
-				}
-				if intV == checkVal {
-					return nil
-				}
+			if err := CheckValInt(vals, checkVal); (!errors.Is(err, ErrNotInRange)) || (err == nil) {
+				return err
 			}
 		}
 	}
-
 	return ErrNotInRange
 }
 
 func Validate(v interface{}) error {
-
 	var errs ValidationErrors
 
 	ff := map[string]func(field interface{}, param interface{}) error{
@@ -197,7 +196,6 @@ func Validate(v interface{}) error {
 					errs = append(errs, e)
 				}
 			}
-
 		}
 	}
 
