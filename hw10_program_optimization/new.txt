@@ -1,0 +1,11 @@
+goos: darwin
+goarch: amd64
+pkg: github.com/brisk84/home_work/hw10_program_optimization
+cpu: VirtualApple @ 2.50GHz
+BenchmarkGetDomainStat-8   	 2350096	      5155 ns/op	    5928 B/op	      41 allocs/op
+BenchmarkGetDomainStat-8   	 2328544	      5214 ns/op	    5928 B/op	      41 allocs/op
+BenchmarkGetDomainStat-8   	 2305519	      5187 ns/op	    5928 B/op	      41 allocs/op
+BenchmarkGetDomainStat-8   	 2312864	      5182 ns/op	    5928 B/op	      41 allocs/op
+BenchmarkGetDomainStat-8   	 2288433	      5177 ns/op	    5928 B/op	      41 allocs/op
+PASS
+ok  	github.com/brisk84/home_work/hw10_program_optimization	86.693s
