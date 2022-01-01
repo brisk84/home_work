@@ -19,8 +19,7 @@ func main() {
 	addr := net.JoinHostPort(flag.Args()[0], flag.Args()[1])
 	tc := NewTelnetClient(addr, *timeout, os.Stdin, os.Stdout)
 
-	err := tc.Connect()
-	if err != nil {
+	if err := tc.Connect(); err != nil {
 		log.Fatal(err)
 	}
 	log.SetFlags(0)
