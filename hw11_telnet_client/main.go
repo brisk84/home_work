@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -22,8 +23,7 @@ func main() {
 	if err := tc.Connect(); err != nil {
 		log.Fatal(err)
 	}
-	log.SetFlags(0)
-	log.Println("...Connected to", addr)
+	fmt.Fprintln(os.Stderr, "...Connected to", addr)
 	defer tc.Close()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
