@@ -2,11 +2,13 @@ package logger
 
 import "fmt"
 
-type Logger struct { // TODO
+type Logger struct {
+	logFile  string
+	logLevel string
 }
 
-func New(level string) *Logger {
-	return &Logger{}
+func New(fileName string, level string) *Logger {
+	return &Logger{logFile: fileName, logLevel: level}
 }
 
 func (l Logger) Info(msg string) {
@@ -14,7 +16,11 @@ func (l Logger) Info(msg string) {
 }
 
 func (l Logger) Error(msg string) {
-	// TODO
+	fmt.Println(msg)
+
 }
 
 // TODO
+
+//* log_file - путь к файлу логов;
+//* log_level - уровень логирования (error / warn / info / debug);
