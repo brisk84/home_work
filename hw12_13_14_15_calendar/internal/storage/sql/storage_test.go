@@ -1,6 +1,8 @@
-package memorystorage
+package sqlstorage
 
 import (
+	"context"
+	"fmt"
 	"strconv"
 	"sync"
 	"testing"
@@ -12,7 +14,14 @@ import (
 )
 
 func TestStorage(t *testing.T) {
-	st := New()
+	ConnStr := "postgresql://localhost/calendar?user=postgres&password=sqlSync24&sslmode=disable"
+	st := New("postgres", ConnStr, 20)
+
+	err := st.Connect(context.TODO())
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer st.Close(context.TODO())
 
 	id1 := uuid.New().String()
 	id2 := uuid.New().String()
@@ -46,7 +55,9 @@ func TestStorage(t *testing.T) {
 		NotifyBefore: time.Date(2022, 1, 1, 14, 0, 0, 0, time.Local).Add(-15 * time.Minute),
 	}
 
-	err := st.AddEvent(ev1)
+	st.ClearCalendar()
+
+	err = st.AddEvent(ev1)
 	require.NoError(t, err)
 
 	err = st.AddEvent(ev1)
@@ -104,13 +115,22 @@ func TestStorage(t *testing.T) {
 
 	evs2 := st.ListEvents()
 	require.Equal(t, 2, len(evs2))
+
+	st.ClearCalendar()
 }
 
 func TestStorageConcurency(t *testing.T) {
-	st := New()
+	ConnStr := "postgresql://localhost/calendar?user=postgres&password=sqlSync24&sslmode=disable"
+	st := New("postgres", ConnStr, 20)
+
+	err := st.Connect(context.TODO())
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer st.Close(context.TODO())
 
 	wg := sync.WaitGroup{}
-	threadsCount := 1000
+	threadsCount := 100
 
 	wg.Add(threadsCount)
 	for i := 0; i < threadsCount; i++ {

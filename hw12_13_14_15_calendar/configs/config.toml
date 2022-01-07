@@ -1,5 +1,15 @@
 [logger]
 level = "INFO"
+path = "stdout"
 
-# TODO
-# ...
+[database]
+db_type = "postgres"
+conn_str = "postgresql://localhost/calendar?user=postgres&password=sqlSync24&sslmode=disable"
+max_conns = 20
+
+[server]
+host = "localhost"
+port = "4242"
+
+[app]
+storage = "memory"
