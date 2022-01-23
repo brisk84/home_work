@@ -1,7 +1,21 @@
 package logger
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
 
 func TestLogger(t *testing.T) {
-	// TODO
+	l := New("/tmp/log.txt", "error")
+	l.Info("Test333")
+	l.Error("Error111")
+	require.True(t, true)
+}
+
+func TestLogger2(t *testing.T) {
+	l := New("stdout", "info")
+	l.Info("Test333")
+	l.Error("Error111")
+	require.True(t, true)
 }
