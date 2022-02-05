@@ -6,7 +6,7 @@ package main
 type Config struct {
 	Logger     LoggerConf
 	Database   DatabaseConf
-	HttpServer ServerConf `mapstructure:"http_server"`
+	HTTPServer ServerConf `mapstructure:"http_server"`
 	GrpcServer ServerConf `mapstructure:"grpc_server"`
 	App        AppConf
 }

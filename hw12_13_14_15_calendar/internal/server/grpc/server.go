@@ -4,7 +4,6 @@ import (
 	"context"
 	"net"
 
-	"github.com/brisk84/home_work/hw12_13_14_15_calendar/api"
 	pb "github.com/brisk84/home_work/hw12_13_14_15_calendar/api"
 	"github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/storage"
 	"google.golang.org/grpc"
@@ -46,6 +45,7 @@ func NewServer(logger Logger, app Application, addr string) *Server {
 
 func (s *Server) Start(ctx context.Context) error {
 	s.logg.Info("Start grpc server")
+	s.ctx = ctx
 
 	loggingInterceptor := grpc.ChainUnaryInterceptor(s.loggingMiddleware)
 	s.grpcServer = grpc.NewServer(loggingInterceptor)
@@ -97,12 +97,12 @@ func (s *Server) AddEvent(ctx context.Context, event *pb.Event) (*pb.Error, erro
 	return &pb.Error{}, err
 }
 
-func (s *Server) GetEvent(ctx context.Context, eventId *pb.EventID) (*pb.Event, error) {
+func (s *Server) GetEvent(ctx context.Context, eventID *pb.EventID) (*pb.Event, error) {
 	s.logg.Info("gprc: GetEvent")
-	if eventId == nil {
+	if eventID == nil {
 		return nil, nil
 	}
-	ev, err := s.app.GetEvent(ctx, eventId.Id)
+	ev, err := s.app.GetEvent(ctx, eventID.Id)
 	return StorageToPb(ev), err
 }
 
@@ -112,22 +112,22 @@ func (s *Server) EditEvent(ctx context.Context, event *pb.Event) (*pb.Error, err
 	return nil, err
 }
 
-func (s *Server) DeleteEvent(ctx context.Context, eventId *pb.EventID) (*pb.Error, error) {
+func (s *Server) DeleteEvent(ctx context.Context, eventID *pb.EventID) (*pb.Error, error) {
 	s.logg.Info("gprc: DeleteEvent")
-	if eventId == nil {
+	if eventID == nil {
 		return nil, nil
 	}
-	err := s.app.DeleteEvent(ctx, eventId.Id)
+	err := s.app.DeleteEvent(ctx, eventID.Id)
 	return nil, err
 }
 
-func (s *Server) ListEvents(ctx context.Context, empty *emptypb.Empty) (*api.Events, error) {
+func (s *Server) ListEvents(ctx context.Context, empty *emptypb.Empty) (*pb.Events, error) {
 	s.logg.Info("gprc: ListEvents")
 	evs, err := s.app.ListEvents(ctx)
 	res := []*pb.Event{}
 	for _, ev := range evs {
 		res = append(res, StorageToPb(ev))
 	}
-	events := &api.Events{Events: res}
+	events := &pb.Events{Events: res}
 	return events, err
 }

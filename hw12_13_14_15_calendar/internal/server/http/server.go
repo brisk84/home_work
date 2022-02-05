@@ -54,7 +54,8 @@ func (s *Server) AddEvent(writer http.ResponseWriter, request *http.Request) {
 		s.logg.Error("AddEvent:" + err.Error())
 		return
 	}
-	s.logg.Info(ev.ID + ev.Title + ev.TimeStart.String() + ev.TimeEnd.String() + ev.UserID + ev.NotifyBefore.String() + ev.Description)
+	s.logg.Info(ev.ID + ev.Title + ev.TimeStart.String() + ev.TimeEnd.String() + ev.UserID +
+		ev.NotifyBefore.String() + ev.Description)
 
 	err = s.app.AddEvent(s.ctx, ev)
 	if err != nil {

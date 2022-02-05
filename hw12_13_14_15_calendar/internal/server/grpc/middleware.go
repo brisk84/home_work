@@ -10,7 +10,8 @@ import (
 	"google.golang.org/grpc/peer"
 )
 
-func (s *Server) loggingMiddleware(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, next grpc.UnaryHandler) (resp interface{}, err error) {
+func (s *Server) loggingMiddleware(ctx context.Context, req interface{},
+	info *grpc.UnaryServerInfo, next grpc.UnaryHandler) (resp interface{}, err error) {
 	p, ok := peer.FromContext(ctx)
 	if !ok {
 		return resp, errors.New("error peer from ctx")

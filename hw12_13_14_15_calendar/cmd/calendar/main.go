@@ -68,7 +68,7 @@ func main() {
 	}
 
 	calendar := app.New(logg, &stor)
-	httpServer := internalhttp.NewServer(logg, calendar, net.JoinHostPort(cfg.HttpServer.Host, cfg.HttpServer.Port))
+	httpServer := internalhttp.NewServer(logg, calendar, net.JoinHostPort(cfg.HTTPServer.Host, cfg.HTTPServer.Port))
 	grpcServer := internalgrpc.NewServer(logg, calendar, net.JoinHostPort(cfg.GrpcServer.Host, cfg.GrpcServer.Port))
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
