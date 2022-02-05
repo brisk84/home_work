@@ -15,6 +15,7 @@ import (
 
 	"github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/app"
 	"github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/logger"
+	internalgrpc "github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/server/http"
 	"github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/storage"
 	memorystorage "github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/storage/memory"
@@ -25,7 +26,8 @@ import (
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+	// flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "configs/config.toml", "Path to configuration file")
 }
 
 func main() {
@@ -66,10 +68,10 @@ func main() {
 	}
 
 	calendar := app.New(logg, &stor)
-	server := internalhttp.NewServer(logg, calendar, net.JoinHostPort(cfg.Server.Host, cfg.Server.Port))
+	httpServer := internalhttp.NewServer(logg, calendar, net.JoinHostPort(cfg.HttpServer.Host, cfg.HttpServer.Port))
+	grpcServer := internalgrpc.NewServer(logg, calendar, net.JoinHostPort(cfg.GrpcServer.Host, cfg.GrpcServer.Port))
 
-	ctx, cancel := signal.NotifyContext(context.Background(),
-		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
 	go func() {
@@ -78,14 +80,25 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		if err := server.Stop(ctx); err != nil {
+		if err := httpServer.Stop(ctx); err != nil {
+			logg.Error("failed to stop http server: " + err.Error())
+		}
+
+		if err := grpcServer.Stop(ctx); err != nil {
 			logg.Error("failed to stop http server: " + err.Error())
 		}
 	}()
 	logg.Info("calendar is running...")
 
-	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
+	go func() {
+		if err := httpServer.Start(ctx); err != nil {
+			logg.Error(err.Error())
+			cancel()
+			// os.Exit(1) //nolint:gocritic
+		}
+	}()
+	if err := grpcServer.Start(ctx); err != nil {
+		logg.Error(err.Error())
 		cancel()
 		os.Exit(1) //nolint:gocritic
 	}

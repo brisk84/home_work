@@ -1,7 +1,38 @@
 syntax = "proto3";
 
 package event;
+// option go_package = ".;pb";
+option go_package = "github.com/brisk84/home_work/hw12_13_14_15_calendar/api";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 
 message Event {
-    // TODO
+    string id = 1;
+    string title = 2;
+    google.protobuf.Timestamp time_start = 3;
+    google.protobuf.Timestamp time_end = 4;
+    string description = 5;
+    string user_id = 6;
+    google.protobuf.Timestamp notify_before = 7; 
+}
+
+message Events {
+    repeated Event events = 1;
+}
+
+message EventID {
+    string id = 1;
+}
+
+message Error {
+    string error = 1;
+}
+
+service Calendar {
+    rpc AddEvent (Event) returns (Error) {}
+    rpc GetEvent (EventID) returns (Event) {}
+    rpc EditEvent (Event) returns (Error) {}
+    rpc DeleteEvent (EventID) returns (Error) {}
+    rpc ListEvents (google.protobuf.Empty) returns (Events) {}
 }

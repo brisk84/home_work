@@ -12,20 +12,31 @@ type App struct {
 	stor *storage.Calendar
 }
 
-// type Logger interface { // TODO
-// }
-
-// type Storage interface { // TODO
-// }
-
 func New(logger *logger.Logger, storage *storage.Calendar) *App {
 	return &App{logg: logger, stor: storage}
 }
 
-func (a *App) CreateEvent(ctx context.Context, id, title string) error {
-	// TODO
-	return nil
-	// return a.storage.CreateEvent(storage.Event{ID: id, Title: title})
+func (a *App) AddEvent(ctx context.Context, event storage.Event) error {
+	stor := *a.stor
+	return stor.AddEvent(event)
 }
 
-// TODO
+func (a *App) GetEvent(ctx context.Context, id string) (storage.Event, error) {
+	stor := *a.stor
+	return stor.GetEvent(id)
+}
+
+func (a *App) EditEvent(ctx context.Context, event storage.Event) error {
+	stor := *a.stor
+	return stor.EditEvent(event)
+}
+
+func (a *App) DeleteEvent(ctx context.Context, id string) error {
+	stor := *a.stor
+	return stor.DeleteEvent(id)
+}
+
+func (a *App) ListEvents(ctx context.Context) ([]storage.Event, error) {
+	stor := *a.stor
+	return stor.ListEvents(), nil
+}
