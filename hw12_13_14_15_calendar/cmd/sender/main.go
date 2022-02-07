@@ -57,6 +57,10 @@ func main() {
 	}
 
 	ch, err := rabb.Get()
+	if err != nil {
+		logg.Error(err.Error())
+		return
+	}
 
 	for d := range ch {
 		log.Printf("Received a message: %s\n", d.Body)
