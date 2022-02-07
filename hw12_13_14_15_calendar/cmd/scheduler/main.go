@@ -82,7 +82,7 @@ func main() {
 	for {
 		select {
 		case <-ctx.Done():
-			fmt.Println("Completed!")
+			fmt.Println("Completed !")
 			return
 		case <-ticker.C:
 			notifyDate := time.Date(time.Now().Year(), time.Now().Month(),

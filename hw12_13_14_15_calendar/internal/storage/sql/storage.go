@@ -78,6 +78,7 @@ func (s *Storage) GetNotifyEvent(notifyDate time.Time) (storage.Event, error) {
 	ev[0].TimeStart = ev[0].TimeStart.Local()
 	ev[0].TimeEnd = ev[0].TimeEnd.Local()
 	ev[0].NotifyBefore = ev[0].NotifyBefore.Local()
+
 	return ev[0], nil
 }
 
