@@ -62,5 +62,4 @@ func main() {
 	evs, err := c.ListEvents(ctx, &emptypb.Empty{})
 
 	fmt.Println(evs, err)
-
 }

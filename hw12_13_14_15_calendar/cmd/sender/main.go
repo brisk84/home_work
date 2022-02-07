@@ -61,5 +61,4 @@ func main() {
 	for d := range ch {
 		log.Printf("Received a message: %s\n", d.Body)
 	}
-
 }

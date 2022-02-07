@@ -37,7 +37,6 @@ func TestSendRabbit(t *testing.T) {
 		fmt.Println(3, err)
 		return
 	}
-
 }
 
 func TestGetRabbit(t *testing.T) {
@@ -74,11 +73,9 @@ func TestGetRabbit(t *testing.T) {
 	fmt.Println(2)
 	// log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
 	// <-forever
-
 }
 
 func TestParseDuration(t *testing.T) {
 	t1, e := time.ParseDuration("365 days")
 	fmt.Println(t1, e)
-
 }

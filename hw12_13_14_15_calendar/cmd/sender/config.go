@@ -9,6 +9,7 @@ type LoggerConf struct {
 	Level string
 	Path  string
 }
+
 type RabbitConf struct {
 	URL string
 }
