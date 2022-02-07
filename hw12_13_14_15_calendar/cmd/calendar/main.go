@@ -65,6 +65,11 @@ func main() {
 		stor = memorystorage.New()
 	} else {
 		stor = sqlstorage.New(cfg.Database.DBType, cfg.Database.ConnStr, cfg.Database.MaxConns)
+		err := stor.(*sqlstorage.Storage).Connect(context.TODO())
+		if err != nil {
+			logg.Error("Can't connect to dabatase")
+			return
+		}
 	}
 
 	calendar := app.New(logg, &stor)

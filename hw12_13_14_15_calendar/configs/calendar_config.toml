@@ -16,4 +16,5 @@ host = "localhost"
 port = "4343"
 
 [app]
-storage = "memory"
+storage = "database"
+#storage = "memory"

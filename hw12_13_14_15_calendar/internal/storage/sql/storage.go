@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/storage"
 	"github.com/jmoiron/sqlx"
@@ -54,6 +55,24 @@ func (s *Storage) GetEvent(id string) (storage.Event, error) {
 	err := s.db.Select(&ev, "select * from events where id=$1", id)
 	if err != nil {
 		return storage.Event{}, err
+	}
+	if len(ev) < 1 {
+		return storage.Event{}, nil
+	}
+	ev[0].TimeStart = ev[0].TimeStart.Local()
+	ev[0].TimeEnd = ev[0].TimeEnd.Local()
+	ev[0].NotifyBefore = ev[0].NotifyBefore.Local()
+	return ev[0], nil
+}
+
+func (s *Storage) GetNotifyEvent(notifyDate time.Time) (storage.Event, error) {
+	var ev []storage.Event
+	err := s.db.Select(&ev, "select * from events where notify_before>$1 and notify_before<$2", notifyDate, notifyDate.Add(24*time.Hour))
+	if err != nil {
+		return storage.Event{}, err
+	}
+	if len(ev) < 1 {
+		return storage.Event{}, nil
 	}
 	ev[0].TimeStart = ev[0].TimeStart.Local()
 	ev[0].TimeEnd = ev[0].TimeEnd.Local()

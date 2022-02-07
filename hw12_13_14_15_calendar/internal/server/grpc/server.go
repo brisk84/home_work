@@ -109,7 +109,7 @@ func (s *Server) GetEvent(ctx context.Context, eventID *pb.EventID) (*pb.Event, 
 func (s *Server) EditEvent(ctx context.Context, event *pb.Event) (*pb.Error, error) {
 	s.logg.Info("gprc: EditEvent")
 	err := s.app.EditEvent(ctx, PbToStorage(event))
-	return nil, err
+	return &pb.Error{}, err
 }
 
 func (s *Server) DeleteEvent(ctx context.Context, eventID *pb.EventID) (*pb.Error, error) {
@@ -118,7 +118,7 @@ func (s *Server) DeleteEvent(ctx context.Context, eventID *pb.EventID) (*pb.Erro
 		return nil, nil
 	}
 	err := s.app.DeleteEvent(ctx, eventID.Id)
-	return nil, err
+	return &pb.Error{}, err
 }
 
 func (s *Server) ListEvents(ctx context.Context, empty *emptypb.Empty) (*pb.Events, error) {
