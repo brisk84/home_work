@@ -85,7 +85,9 @@ func main() {
 			fmt.Println("Completed!")
 			return
 		case <-ticker.C:
-			ev, er := stor.GetNotifyEvent(time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day(), 0, 0, 0, 0, time.Local))
+			notifyDate := time.Date(time.Now().Year(), time.Now().Month(),
+				time.Now().Day(), 0, 0, 0, 0, time.Local)
+			ev, er := stor.GetNotifyEvent(notifyDate)
 			fmt.Println(ev, er)
 
 			msg, err := json.Marshal(ev)

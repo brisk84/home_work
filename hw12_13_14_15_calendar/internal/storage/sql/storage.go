@@ -67,7 +67,8 @@ func (s *Storage) GetEvent(id string) (storage.Event, error) {
 
 func (s *Storage) GetNotifyEvent(notifyDate time.Time) (storage.Event, error) {
 	var ev []storage.Event
-	err := s.db.Select(&ev, "select * from events where notify_before>$1 and notify_before<$2", notifyDate, notifyDate.Add(24*time.Hour))
+	sqlText := "select * from events where notify_before>$1 and notify_before<$2"
+	err := s.db.Select(&ev, sqlText, notifyDate, notifyDate.Add(24*time.Hour))
 	if err != nil {
 		return storage.Event{}, err
 	}
