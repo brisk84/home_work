@@ -13,12 +13,12 @@ services:
     # build: ../build/Dockerfile_calendar
     build:
       context: .
-      dockerfile: Dockerfile-calendar
+      dockerfile: Dockerfile_calendar
 
     # Команда, которую нужно запустить после создания образа.
     # Следующая команда означает запуск "python ./server.py".
 
-    command: bin/calendar
+    command: /opt/calendar/calendar-app -config /etc/calendar/config.toml
 
     # Вспомните о том, что в качестве порта в 'server/server.py' указан порт 1234.
     # Если мы хотим обратиться к серверу с нашего компьютера (находясь за пределами контейнера),
@@ -30,13 +30,19 @@ services:
     # ожидает поступления запросов).
 
     ports:
-      - 4242:4242
+      # - 4242:4242
       - 4343:4343
+    network_mode: host
 
   # Второй сервис (контейнер): клиент.
   # Этот сервис назван 'client'.
 
-  # client:
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile_client
+
+    
   #   # Здесь 'client/ соответствует пути к папке, которая содержит
   #   # файл Dockerfile для клиентской части системы.
 
@@ -50,11 +56,11 @@ services:
   #   # Ключевое слово 'network_mode' используется для описания типа сети.
   #   # Тут мы указываем то, что контейнер может обращаться к 'localhost' компьютера.
 
-  #   network_mode: host
+    network_mode: host
 
   #   # Ключевое слово 'depends_on' позволяет указывать, должен ли сервис,
   #   # прежде чем запуститься, ждать, когда будут готовы к работе другие сервисы.
   #   # Нам нужно, чтобы сервис 'client' дождался бы готовности к работе сервиса 'server'.
  
-  #   depends_on:
-  #     - server
+    depends_on:
+      - calendar

@@ -12,7 +12,7 @@ build:
 	go build -v -o $(BIN_SENDER) -ldflags "$(LDFLAGS)" ./cmd/sender
 
 run: build
-	$(BIN) -config ./configs/calendar_config.toml
+	$(BIN_CALENDAR) -config ./configs/calendar_config.toml
 
 client:
 	go run ./cmd/client
@@ -27,13 +27,15 @@ build-img:
 	docker build \
 		--build-arg=LDFLAGS="$(LDFLAGS)" \
 		-t $(DOCKER_IMG) \
-		-f build/Dockerfile .
+		-f build/Dockerfile_calendar .
 
 run-img: build-img
 	docker run $(DOCKER_IMG)
 
 version: build
-	$(BIN) version
+	$(BIN_CALENDAR) version
+	$(BIN_SCHEDULER) version
+	$(BIN_SENDER) version
 
 test:
 	go test -race ./internal/...
@@ -48,3 +50,6 @@ lint: install-lint-deps
 
 generate:
 	protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative api/EventService.proto
+
+up:
+	docker-compose -f deployments/docker-compose.yaml build
