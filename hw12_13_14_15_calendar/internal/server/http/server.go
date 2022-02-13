@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"time"
 
+	"github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/app"
 	"github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/storage"
 )
 
@@ -16,7 +17,7 @@ type Server struct {
 	addr       string
 	httpServer http.Server
 	logg       Logger
-	app        Application
+	appl       *app.App
 	ctx        context.Context
 }
 
@@ -25,140 +26,161 @@ type Logger interface {
 	Error(msg string)
 }
 
-type Application interface {
-	AddEvent(context.Context, storage.Event) error
-	GetEvent(context.Context, string) (storage.Event, error)
-	EditEvent(context.Context, storage.Event) error
-	DeleteEvent(context.Context, string) error
-	ListEvents(context.Context) ([]storage.Event, error)
-}
-
-func NewServer(logger Logger, app Application, addr string) *Server {
+func NewServer(logger Logger, appl *app.App, addr string) *Server {
 	server := &Server{
 		addr: addr,
 		logg: logger,
-		app:  app,
+		appl: appl,
 	}
 	return server
 }
 
 func (s *Server) AddEvent(writer http.ResponseWriter, request *http.Request) {
-	body, err := ioutil.ReadAll(request.Body)
+	body, err := io.ReadAll(request.Body)
 	if err != nil {
 		s.logg.Error(err.Error())
+		writer.WriteHeader(http.StatusBadRequest)
+		writer.Write([]byte(err.Error()))
 		return
 	}
 	ev := storage.Event{}
 	err = json.Unmarshal(body, &ev)
 	if err != nil {
 		s.logg.Error("AddEvent:" + err.Error())
+		writer.WriteHeader(http.StatusBadRequest)
+		writer.Write([]byte(err.Error()))
 		return
 	}
 	s.logg.Info(ev.ID + ev.Title + ev.TimeStart.String() + ev.TimeEnd.String() + ev.UserID +
 		ev.NotifyBefore.String() + ev.Description)
 
-	err = s.app.AddEvent(s.ctx, ev)
+	err = s.appl.AddEvent(s.ctx, ev)
 	if err != nil {
 		s.logg.Error("AddEvent:" + err.Error())
+		writer.WriteHeader(http.StatusConflict)
 		writer.Write([]byte(err.Error()))
 		return
 	}
+	writer.WriteHeader(http.StatusOK)
 	writer.Write([]byte("ok"))
 }
 
 func (s *Server) GetEvent(writer http.ResponseWriter, request *http.Request) {
-	body, err := ioutil.ReadAll(request.Body)
+	body, err := io.ReadAll(request.Body)
 	if err != nil {
 		s.logg.Error(err.Error())
+		writer.WriteHeader(http.StatusBadRequest)
+		writer.Write([]byte(err.Error()))
 		return
 	}
 	ev := storage.Event{}
 	err = json.Unmarshal(body, &ev)
 	if err != nil {
 		s.logg.Error("GetEvent:" + err.Error())
+		writer.WriteHeader(http.StatusBadRequest)
+		writer.Write([]byte(err.Error()))
 		return
 	}
 	s.logg.Info(ev.ID)
 
-	ev, err = s.app.GetEvent(s.ctx, ev.ID)
+	ev, err = s.appl.GetEvent(s.ctx, ev.ID)
 	if err != nil {
 		s.logg.Error("GetEvent:" + err.Error())
+		writer.WriteHeader(http.StatusInternalServerError)
 		writer.Write([]byte(err.Error()))
 		return
 	}
 	data, err := json.Marshal(ev)
 	if err != nil {
 		s.logg.Error("GetEvent:" + err.Error())
+		writer.WriteHeader(http.StatusInternalServerError)
 		writer.Write([]byte(err.Error()))
 		return
 	}
+	writer.WriteHeader(http.StatusOK)
 	writer.Write(data)
 }
 
 func (s *Server) EditEvent(writer http.ResponseWriter, request *http.Request) {
-	body, err := ioutil.ReadAll(request.Body)
+	body, err := io.ReadAll(request.Body)
 	if err != nil {
 		s.logg.Error(err.Error())
+		writer.WriteHeader(http.StatusBadRequest)
+		writer.Write([]byte(err.Error()))
 		return
 	}
 	ev := storage.Event{}
 	err = json.Unmarshal(body, &ev)
 	if err != nil {
 		s.logg.Error("EditEvent:" + err.Error())
+		writer.WriteHeader(http.StatusBadRequest)
+		writer.Write([]byte(err.Error()))
 		return
 	}
 	s.logg.Info(ev.ID)
 
-	err = s.app.EditEvent(s.ctx, ev)
+	err = s.appl.EditEvent(s.ctx, ev)
 	if err != nil {
 		s.logg.Error("EditEvent:" + err.Error())
+		writer.WriteHeader(http.StatusInternalServerError)
 		writer.Write([]byte(err.Error()))
 		return
 	}
+	writer.WriteHeader(http.StatusOK)
 	writer.Write([]byte("ok"))
 }
 
 func (s *Server) DeleteEvent(writer http.ResponseWriter, request *http.Request) {
-	body, err := ioutil.ReadAll(request.Body)
+	body, err := io.ReadAll(request.Body)
 	if err != nil {
 		s.logg.Error(err.Error())
+		writer.WriteHeader(http.StatusBadRequest)
+		writer.Write([]byte(err.Error()))
 		return
 	}
 	ev := storage.Event{}
 	err = json.Unmarshal(body, &ev)
 	if err != nil {
 		s.logg.Error("GetEvent:" + err.Error())
+		writer.WriteHeader(http.StatusBadRequest)
+		writer.Write([]byte(err.Error()))
 		return
 	}
 	s.logg.Info(ev.ID)
 
-	err = s.app.DeleteEvent(s.ctx, ev.ID)
+	err = s.appl.DeleteEvent(s.ctx, ev.ID)
 	if err != nil {
 		s.logg.Error("DeleteEvent:" + err.Error())
+		writer.WriteHeader(http.StatusInternalServerError)
 		writer.Write([]byte(err.Error()))
 		return
 	}
+	writer.WriteHeader(http.StatusOK)
 	writer.Write([]byte("ok"))
 }
 
 func (s *Server) ListEvents(writer http.ResponseWriter, request *http.Request) {
-	events, err := s.app.ListEvents(s.ctx)
+	events, err := s.appl.ListEvents(s.ctx)
 	if err != nil {
 		s.logg.Error("ListEvents:" + err.Error())
+		writer.WriteHeader(http.StatusInternalServerError)
 		writer.Write([]byte(err.Error()))
 		return
 	}
 	if events == nil {
 		s.logg.Error("ListEvents: no events")
-		writer.Write([]byte(err.Error()))
+		writer.WriteHeader(http.StatusNotFound)
+		writer.Write([]byte("no events"))
 		return
 	}
 	data, err := json.Marshal(events)
 	if err != nil {
 		s.logg.Error("ListEvents:" + err.Error())
+		writer.WriteHeader(http.StatusInternalServerError)
 		writer.Write([]byte(err.Error()))
 		return
 	}
+	writer.WriteHeader(http.StatusOK)
 	writer.Write(data)
 }
 

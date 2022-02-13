@@ -5,6 +5,7 @@ import (
 	"net"
 
 	pb "github.com/brisk84/home_work/hw12_13_14_15_calendar/api"
+	"github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/app"
 	"github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/storage"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -16,7 +17,7 @@ type Server struct {
 	addr       string
 	grpcServer *grpc.Server
 	logg       Logger
-	app        Application
+	appl       *app.App
 	ctx        context.Context
 }
 
@@ -25,19 +26,11 @@ type Logger interface {
 	Error(msg string)
 }
 
-type Application interface {
-	AddEvent(context.Context, storage.Event) error
-	GetEvent(context.Context, string) (storage.Event, error)
-	EditEvent(context.Context, storage.Event) error
-	DeleteEvent(context.Context, string) error
-	ListEvents(context.Context) ([]storage.Event, error)
-}
-
-func NewServer(logger Logger, app Application, addr string) *Server {
+func NewServer(logger Logger, appl *app.App, addr string) *Server {
 	server := &Server{
 		addr: addr,
 		logg: logger,
-		app:  app,
+		appl: appl,
 	}
 
 	return server
@@ -93,7 +86,7 @@ func StorageToPb(event storage.Event) *pb.Event {
 
 func (s *Server) AddEvent(ctx context.Context, event *pb.Event) (*pb.Error, error) {
 	s.logg.Info("gprc: AddEvent")
-	err := s.app.AddEvent(ctx, PbToStorage(event))
+	err := s.appl.AddEvent(ctx, PbToStorage(event))
 	return &pb.Error{}, err
 }
 
@@ -102,13 +95,13 @@ func (s *Server) GetEvent(ctx context.Context, eventID *pb.EventID) (*pb.Event, 
 	if eventID == nil {
 		return nil, nil
 	}
-	ev, err := s.app.GetEvent(ctx, eventID.Id)
+	ev, err := s.appl.GetEvent(ctx, eventID.Id)
 	return StorageToPb(ev), err
 }
 
 func (s *Server) EditEvent(ctx context.Context, event *pb.Event) (*pb.Error, error) {
 	s.logg.Info("gprc: EditEvent")
-	err := s.app.EditEvent(ctx, PbToStorage(event))
+	err := s.appl.EditEvent(ctx, PbToStorage(event))
 	return nil, err
 }
 
@@ -117,13 +110,13 @@ func (s *Server) DeleteEvent(ctx context.Context, eventID *pb.EventID) (*pb.Erro
 	if eventID == nil {
 		return nil, nil
 	}
-	err := s.app.DeleteEvent(ctx, eventID.Id)
+	err := s.appl.DeleteEvent(ctx, eventID.Id)
 	return nil, err
 }
 
 func (s *Server) ListEvents(ctx context.Context, empty *emptypb.Empty) (*pb.Events, error) {
 	s.logg.Info("gprc: ListEvents")
-	evs, err := s.app.ListEvents(ctx)
+	evs, err := s.appl.ListEvents(ctx)
 	res := []*pb.Event{}
 	for _, ev := range evs {
 		res = append(res, StorageToPb(ev))
