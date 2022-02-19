@@ -66,21 +66,27 @@ func (s *Storage) GetEvent(ctx context.Context, id string) (storage.Event, error
 	return ev[0], nil
 }
 
-func (s *Storage) GetNotifyEvent(ctx context.Context, notifyDate time.Time) (storage.Event, error) {
-	var ev []storage.Event
-	err := s.db.SelectContext(ctx, &ev, "select * from events where notify_before>$1 "+
-		"and notify_before<$2", notifyDate, notifyDate.Add(24*time.Hour))
+func (s *Storage) GetNotifyEvent(ctx context.Context, notifyDate time.Time) ([]storage.Event, error) {
+	var evs []storage.Event
+	err := s.db.SelectContext(ctx, &evs, "select * from events where notify_before>$1 "+
+		"and notify_before<$2 and notified=false", notifyDate, notifyDate.Add(24*time.Hour))
 	if err != nil {
-		return storage.Event{}, err
+		return nil, err
 	}
-	if len(ev) < 1 {
-		return storage.Event{}, nil
+	if len(evs) < 1 {
+		return nil, nil
 	}
-	ev[0].TimeStart = ev[0].TimeStart.Local()
-	ev[0].TimeEnd = ev[0].TimeEnd.Local()
-	ev[0].NotifyBefore = ev[0].NotifyBefore.Local()
+	for _, v := range evs {
+		v.TimeStart = v.TimeStart.Local()
+		v.TimeEnd = v.TimeEnd.Local()
+		v.NotifyBefore = v.NotifyBefore.Local()
+	}
+	return evs, nil
+}
 
-	return ev[0], nil
+func (s *Storage) SetNotified(ctx context.Context, event storage.Event) error {
+	_, err := s.db.ExecContext(ctx, "update events set notified = true where id=$1", event.ID)
+	return err
 }
 
 func (s *Storage) EditEvent(ctx context.Context, event storage.Event) error {

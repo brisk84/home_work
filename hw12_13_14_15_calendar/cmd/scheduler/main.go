@@ -88,17 +88,24 @@ func main() {
 		case <-ticker.C:
 			notifyDate := time.Date(time.Now().Year(), time.Now().Month(),
 				time.Now().Day(), 0, 0, 0, 0, time.Local)
-			ev, err := stor.GetNotifyEvent(ctx, notifyDate)
+			evs, err := stor.GetNotifyEvent(ctx, notifyDate)
 			if err != nil {
 				logg.Error(err.Error())
 				return
 			}
-			msg, err := json.Marshal(ev)
-			if err != nil {
-				logg.Error(err.Error())
-				return
+			for _, v := range evs {
+				msg, err := json.Marshal(v)
+				if err != nil {
+					logg.Error(err.Error())
+					return
+				}
+				rabb.Send(msg)
+				err = stor.SetNotified(ctx, v)
+				if err != nil {
+					logg.Error(err.Error())
+					return
+				}
 			}
-			rabb.Send(msg)
 		}
 	}
 }

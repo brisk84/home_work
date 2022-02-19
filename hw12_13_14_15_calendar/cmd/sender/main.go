@@ -9,6 +9,7 @@ import (
 
 	"github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/logger"
 	"github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/rabbit"
+	"github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/ver"
 	"github.com/spf13/viper"
 )
 
@@ -23,7 +24,7 @@ func main() {
 	flag.Parse()
 
 	if flag.Arg(0) == "version" {
-		printVersion()
+		ver.PrintVersion()
 		return
 	}
 
@@ -33,9 +34,6 @@ func main() {
 
 	viper.SetConfigName(cfgFile)
 	viper.AddConfigPath(cfgPath)
-
-	// viper.SetConfigName("config")
-	// viper.AddConfigPath("../../configs/")
 
 	cfg := NewConfig()
 

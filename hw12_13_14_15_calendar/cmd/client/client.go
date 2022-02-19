@@ -40,7 +40,7 @@ func main() {
 		TimeEnd:      timestamppb.New(time.Date(2022, 0o1, 24, 18, 0o0, 0o0, 0o0, time.Local)),
 		Description:  "Description of event 02",
 		UserId:       "123",
-		NotifyBefore: timestamppb.New(time.Date(2022, 0o1, 24, 17, 30, 0o0, 0o0, time.Local)),
+		NotifyBefore: timestamppb.New(time.Now()),
 	})
 	fmt.Println(err, r)
 
@@ -51,7 +51,7 @@ func main() {
 		TimeEnd:      timestamppb.New(time.Date(2022, 0o1, 23, 18, 0o0, 0o0, 0o0, time.Local)),
 		Description:  "Description of event 01 [edited]",
 		UserId:       "123",
-		NotifyBefore: timestamppb.New(time.Date(2022, 0o1, 23, 17, 30, 0o0, 0o0, time.Local)),
+		NotifyBefore: timestamppb.New(time.Now()),
 	})
 
 	ev, err := c.GetEvent(ctx, &pb.EventID{Id: "1"})

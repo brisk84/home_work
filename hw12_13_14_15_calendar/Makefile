@@ -12,7 +12,7 @@ build:
 	go build -v -o $(BIN_SENDER) -ldflags "$(LDFLAGS)" ./cmd/sender
 
 run: build
-	$(BIN) -config ./configs/calendar_config.toml
+	$(BIN_CALENDAR) -config ./configs/calendar_config.toml
 
 client:
 	go run ./cmd/client
