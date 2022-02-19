@@ -1,12 +1,5 @@
 package rabbit
 
-import (
-	"log"
-	"testing"
-
-	"github.com/stretchr/testify/require"
-)
-
 // docker run -d --name some-rabbit -p 5672:5672 -p 5673:5673 -p 15672:15672 rabbitmq:3-management
 
 // func TestSendRabbit(t *testing.T) {
@@ -73,17 +66,17 @@ import (
 // 	// <-forever
 // }
 
-func TestRabbit(t *testing.T) {
-	url := "amqp://guest:guest@localhost:5672/"
-	r := NewRabbit(url)
-	err := r.Connect()
-	require.NoError(t, err)
-	err = r.Send([]byte("Test123"))
-	require.NoError(t, err)
-	ch, err := r.Get()
-	require.NoError(t, err)
+// func TestRabbit(t *testing.T) {
+// 	url := "amqp://guest:guest@localhost:5672/"
+// 	r := NewRabbit(url)
+// 	err := r.Connect()
+// 	require.NoError(t, err)
+// 	err = r.Send([]byte("Test123"))
+// 	require.NoError(t, err)
+// 	ch, err := r.Get()
+// 	require.NoError(t, err)
 
-	for d := range ch {
-		log.Printf("Received a message: %s\n", d.Body)
-	}
-}
+// 	for d := range ch {
+// 		log.Printf("Received a message: %s\n", d.Body)
+// 	}
+// }
