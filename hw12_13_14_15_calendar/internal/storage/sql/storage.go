@@ -28,16 +28,17 @@ func (s *Storage) Connect(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	s.db.PingContext(ctx)
 	s.db.DB.SetMaxOpenConns(s.MaxConns)
 	return nil
 }
 
-func (s *Storage) Close(ctx context.Context) error {
+func (s *Storage) Close() error {
 	return s.db.Close()
 }
 
-func (s *Storage) AddEvent(event storage.Event) error {
-	_, err := s.db.Exec("insert into "+
+func (s *Storage) AddEvent(ctx context.Context, event storage.Event) error {
+	_, err := s.db.ExecContext(ctx, "insert into "+
 		"events(id, title, time_start, time_end, description, user_id, notify_before) "+
 		"values ($1, $2, $3, $4, $5, $6, $7)",
 		event.ID, event.Title, event.TimeStart, event.TimeEnd, event.Description, event.UserID, event.NotifyBefore)
@@ -50,9 +51,9 @@ func (s *Storage) AddEvent(event storage.Event) error {
 	return err
 }
 
-func (s *Storage) GetEvent(id string) (storage.Event, error) {
+func (s *Storage) GetEvent(ctx context.Context, id string) (storage.Event, error) {
 	var ev []storage.Event
-	err := s.db.Select(&ev, "select * from events where id=$1", id)
+	err := s.db.SelectContext(ctx, &ev, "select * from events where id=$1", id)
 	if err != nil {
 		return storage.Event{}, err
 	}
@@ -65,10 +66,10 @@ func (s *Storage) GetEvent(id string) (storage.Event, error) {
 	return ev[0], nil
 }
 
-func (s *Storage) GetNotifyEvent(notifyDate time.Time) (storage.Event, error) {
+func (s *Storage) GetNotifyEvent(ctx context.Context, notifyDate time.Time) (storage.Event, error) {
 	var ev []storage.Event
-	sqlText := "select * from events where notify_before>$1 and notify_before<$2"
-	err := s.db.Select(&ev, sqlText, notifyDate, notifyDate.Add(24*time.Hour))
+	err := s.db.SelectContext(ctx, &ev, "select * from events where notify_before>$1 "+
+		"and notify_before<$2", notifyDate, notifyDate.Add(24*time.Hour))
 	if err != nil {
 		return storage.Event{}, err
 	}
@@ -82,8 +83,8 @@ func (s *Storage) GetNotifyEvent(notifyDate time.Time) (storage.Event, error) {
 	return ev[0], nil
 }
 
-func (s *Storage) EditEvent(event storage.Event) error {
-	evs := s.ListEvents()
+func (s *Storage) EditEvent(ctx context.Context, event storage.Event) error {
+	evs := s.ListEvents(ctx)
 	for _, v := range evs {
 		if v.ID == event.ID {
 			continue
@@ -92,7 +93,7 @@ func (s *Storage) EditEvent(event storage.Event) error {
 			return storage.ErrDateBusy
 		}
 	}
-	res, err := s.db.Exec("update events set "+
+	res, err := s.db.ExecContext(ctx, "update events set "+
 		"title=$2, time_start=$3, time_end=$4, description=$5, user_id=$6, notify_before=$7 where id=$1",
 		event.ID, event.Title, event.TimeStart, event.TimeEnd, event.Description, event.UserID, event.NotifyBefore)
 	if num, _ := res.RowsAffected(); num == 0 {
@@ -101,17 +102,17 @@ func (s *Storage) EditEvent(event storage.Event) error {
 	return err
 }
 
-func (s *Storage) DeleteEvent(id string) error {
-	res, err := s.db.Exec("delete from events where id=$1", id)
+func (s *Storage) DeleteEvent(ctx context.Context, id string) error {
+	res, err := s.db.ExecContext(ctx, "delete from events where id=$1", id)
 	if num, _ := res.RowsAffected(); num == 0 {
 		err = fmt.Errorf("%w: %v", storage.ErrNotFound, err)
 	}
 	return err
 }
 
-func (s *Storage) ListEvents() []storage.Event {
+func (s *Storage) ListEvents(ctx context.Context) []storage.Event {
 	var evs []storage.Event
-	err := s.db.Select(&evs, "select * from events")
+	err := s.db.SelectContext(ctx, &evs, "select * from events")
 	if err != nil {
 		return nil
 	}
@@ -123,7 +124,7 @@ func (s *Storage) ListEvents() []storage.Event {
 	return evs
 }
 
-func (s *Storage) ClearCalendar() error {
-	_, err := s.db.Exec("delete from events *")
+func (s *Storage) ClearCalendar(ctx context.Context) error {
+	_, err := s.db.ExecContext(ctx, "delete from events *")
 	return err
 }

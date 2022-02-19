@@ -16,6 +16,7 @@ import (
 	"github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/logger"
 	"github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/rabbit"
 	sqlstorage "github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/storage/sql"
+	"github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/ver"
 	"github.com/spf13/viper"
 )
 
@@ -30,7 +31,7 @@ func main() {
 	flag.Parse()
 
 	if flag.Arg(0) == "version" {
-		printVersion()
+		ver.PrintVersion()
 		return
 	}
 
@@ -62,8 +63,11 @@ func main() {
 
 	ticker := time.NewTicker(checkInterval)
 
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	defer cancel()
+
 	stor := sqlstorage.New(cfg.Database.DBType, cfg.Database.ConnStr, cfg.Database.MaxConns)
-	err = stor.Connect(context.TODO())
+	err = stor.Connect(ctx)
 	if err != nil {
 		logg.Error("Can't connect to dabatase")
 		return
@@ -76,9 +80,6 @@ func main() {
 		return
 	}
 
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
-	defer cancel()
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -87,9 +88,11 @@ func main() {
 		case <-ticker.C:
 			notifyDate := time.Date(time.Now().Year(), time.Now().Month(),
 				time.Now().Day(), 0, 0, 0, 0, time.Local)
-			ev, er := stor.GetNotifyEvent(notifyDate)
-			fmt.Println(ev, er)
-
+			ev, err := stor.GetNotifyEvent(ctx, notifyDate)
+			if err != nil {
+				logg.Error(err.Error())
+				return
+			}
 			msg, err := json.Marshal(ev)
 			if err != nil {
 				logg.Error(err.Error())

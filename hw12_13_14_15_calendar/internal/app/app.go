@@ -18,25 +18,25 @@ func New(logger *logger.Logger, storage *storage.Calendar) *App {
 
 func (a *App) AddEvent(ctx context.Context, event storage.Event) error {
 	stor := *a.stor
-	return stor.AddEvent(event)
+	return stor.AddEvent(ctx, event)
 }
 
 func (a *App) GetEvent(ctx context.Context, id string) (storage.Event, error) {
 	stor := *a.stor
-	return stor.GetEvent(id)
+	return stor.GetEvent(ctx, id)
 }
 
 func (a *App) EditEvent(ctx context.Context, event storage.Event) error {
 	stor := *a.stor
-	return stor.EditEvent(event)
+	return stor.EditEvent(ctx, event)
 }
 
 func (a *App) DeleteEvent(ctx context.Context, id string) error {
 	stor := *a.stor
-	return stor.DeleteEvent(id)
+	return stor.DeleteEvent(ctx, id)
 }
 
 func (a *App) ListEvents(ctx context.Context) ([]storage.Event, error) {
 	stor := *a.stor
-	return stor.ListEvents(), nil
+	return stor.ListEvents(ctx), nil
 }

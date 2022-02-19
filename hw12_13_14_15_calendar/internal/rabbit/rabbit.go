@@ -35,6 +35,7 @@ func (r *Rabbit) Connect() error {
 		r.conn.Close()
 		return err
 	}
+	// r.ch.ExchangeDeclare()
 	return nil
 }
 
