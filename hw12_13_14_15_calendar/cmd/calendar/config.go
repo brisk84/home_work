@@ -4,10 +4,11 @@ package main
 // Организация конфига в main принуждает нас сужать API компонентов, использовать
 // при их конструировании только необходимые параметры, а также уменьшает вероятность циклической зависимости.
 type Config struct {
-	Logger   LoggerConf
-	Database DatabaseConf
-	Server   ServerConf
-	App      AppConf
+	Logger     LoggerConf
+	Database   DatabaseConf
+	HTTPServer ServerConf `mapstructure:"http_server"`
+	GrpcServer ServerConf `mapstructure:"grpc_server"`
+	App        AppConf
 }
 
 type LoggerConf struct {

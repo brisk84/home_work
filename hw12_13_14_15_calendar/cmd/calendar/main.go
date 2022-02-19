@@ -15,24 +15,27 @@ import (
 
 	"github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/app"
 	"github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/logger"
+	internalgrpc "github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/server/http"
 	"github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/storage"
 	memorystorage "github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/storage/memory"
 	sqlstorage "github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/storage/sql"
+	"github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/ver"
 	"github.com/spf13/viper"
 )
 
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+	// flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "configs/config.toml", "Path to configuration file")
 }
 
 func main() {
 	flag.Parse()
 
 	if flag.Arg(0) == "version" {
-		printVersion()
+		ver.PrintVersion()
 		return
 	}
 
@@ -58,19 +61,24 @@ func main() {
 
 	logg := logger.New(cfg.Logger.Path, cfg.Logger.Level)
 
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	defer cancel()
+
 	var stor storage.Calendar
 	if cfg.App.Storage == "memory" {
 		stor = memorystorage.New()
 	} else {
 		stor = sqlstorage.New(cfg.Database.DBType, cfg.Database.ConnStr, cfg.Database.MaxConns)
+		err := stor.(*sqlstorage.Storage).Connect(ctx)
+		if err != nil {
+			logg.Error("Can't connect to dabatase")
+			return
+		}
 	}
 
 	calendar := app.New(logg, &stor)
-	server := internalhttp.NewServer(logg, calendar, net.JoinHostPort(cfg.Server.Host, cfg.Server.Port))
-
-	ctx, cancel := signal.NotifyContext(context.Background(),
-		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
-	defer cancel()
+	httpServer := internalhttp.NewServer(logg, calendar, net.JoinHostPort(cfg.HTTPServer.Host, cfg.HTTPServer.Port))
+	grpcServer := internalgrpc.NewServer(logg, calendar, net.JoinHostPort(cfg.GrpcServer.Host, cfg.GrpcServer.Port))
 
 	go func() {
 		<-ctx.Done()
@@ -78,14 +86,25 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		if err := server.Stop(ctx); err != nil {
+		if err := httpServer.Stop(ctx); err != nil {
+			logg.Error("failed to stop http server: " + err.Error())
+		}
+
+		if err := grpcServer.Stop(ctx); err != nil {
 			logg.Error("failed to stop http server: " + err.Error())
 		}
 	}()
 	logg.Info("calendar is running...")
 
-	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
+	go func() {
+		if err := httpServer.Start(ctx); err != nil {
+			logg.Error(err.Error())
+			cancel()
+			// os.Exit(1) //nolint:gocritic
+		}
+	}()
+	if err := grpcServer.Start(ctx); err != nil {
+		logg.Error(err.Error())
 		cancel()
 		os.Exit(1) //nolint:gocritic
 	}

@@ -1,0 +1,6 @@
+[logger]
+level = "INFO"
+path = "stdout"
+
+[rabbit]
+url = "amqp://guest:guest@localhost:5672/"

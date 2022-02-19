@@ -34,3 +34,5 @@ ENV CONFIG_FILE /etc/calendar/config.toml
 COPY ./configs/config.toml ${CONFIG_FILE}
 
 CMD ${BIN_FILE} -config ${CONFIG_FILE}
+
+# docker run -d --hostname my-rabbit --name some-rabbit rabbitmq:3
