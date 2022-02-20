@@ -37,7 +37,7 @@ version: build
 	$(BIN_SCHEDULER) version
 	$(BIN_SENDER) version
 
-test:
+test: up
 	go test -race ./internal/...
 
 install-lint-deps:
