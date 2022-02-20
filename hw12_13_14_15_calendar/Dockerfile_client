@@ -24,7 +24,7 @@ RUN CGO_ENABLED=0 go build \
 FROM alpine:3.9
 
 LABEL ORGANIZATION="OTUS Online Education"
-LABEL SERVICE="calendar"
+LABEL SERVICE="client"
 LABEL MAINTAINERS="student@otus.ru"
 
 ENV BIN_FILE "/opt/client/client-app"

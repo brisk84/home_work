@@ -52,4 +52,7 @@ generate:
 	protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative api/EventService.proto
 
 up:
-	docker-compose -f deployments/docker-compose.yaml build
+	docker-compose -f docker-compose.yaml build
+
+docker:
+	docker-compose -f docker-compose.yml down -v --remove-orphans
