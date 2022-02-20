@@ -1,6 +1,3 @@
--- +goose Up
-CREATE DATABASE calendar;
-
 CREATE TABLE events(  
     id text NOT NULL PRIMARY KEY,
     title text not null,
@@ -10,8 +7,3 @@ CREATE TABLE events(
     user_id text,
     notify_before TIMESTAMP with time zone
 );
-
--- +goose Down
-drop table events;
-
-drop DATABASE calendar;

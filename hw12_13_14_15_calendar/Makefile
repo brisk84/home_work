@@ -2,6 +2,7 @@ BIN_CALENDAR := "./bin/calendar"
 BIN_SCHEDULER := "./bin/scheduler"
 BIN_SENDER := "./bin/sender"
 DOCKER_IMG="calendar:develop"
+CONN_STR = "postgresql://localhost/postgres?user=postgres&password=sqlSync24&sslmode=disable"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
@@ -51,8 +52,21 @@ lint: install-lint-deps
 generate:
 	protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative api/EventService.proto
 
-up:
-	docker-compose -f docker-compose.yaml build
+timeout5s:
+	sleep 20
 
-docker:
-	docker-compose -f docker-compose.yml down -v --remove-orphans
+goose_up:
+	goose -dir ./migrations postgres $(CONN_STR) up
+goose_down:
+	goose -dir ./migrations postgres $(CONN_STR) down
+
+docker_build:
+	docker-compose -f docker-compose.yaml build
+docker_up:
+	docker-compose -f docker-compose.yaml up -d
+docker_down:
+	docker-compose -f docker-compose.yaml down -v --remove-orphans
+
+up: docker_up
+	
+down: docker_down

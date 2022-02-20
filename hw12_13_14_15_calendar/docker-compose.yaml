@@ -1,17 +1,37 @@
 version: "3"
 
 services:
+  db:
+    restart: always
+    container_name: db
+    image: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./migrations/database:/docker-entrypoint-initdb.d
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: sqlSync24
 
   calendar:
     restart: always
     build:
       context: .
       dockerfile: Dockerfile_calendar
-    command: /opt/calendar/calendar-app -config /etc/calendar/config.toml
+    command: sh -c "sleep 10 && /opt/calendar/calendar-app -config /etc/calendar/config.toml"
     ports:
       # - 4242:4242
       - 4343:4343
     network_mode: host
+    depends_on:
+      - db
 
 #   calendar:
 #     restart: always
@@ -30,9 +50,12 @@ services:
 #       RABBIT_ADDR: ${RABBIT_ADDR}
 
   client:
+    restart: always
     build:
       context: .
       dockerfile: Dockerfile_client
     network_mode: host
     depends_on:
       - calendar
+volumes:
+  pgdata:
