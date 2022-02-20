@@ -30,19 +30,24 @@ func (s *Storage) Connect(ctx context.Context) error {
 	}
 	s.db.PingContext(ctx)
 	s.db.DB.SetMaxOpenConns(s.MaxConns)
-	_, err = s.db.Exec("select * from events")
-	pqErr := err.(*pq.Error)
-	if pqErr.Code == "42P01" {
-		s.db.DB.Exec(`CREATE TABLE events(
-			id text NOT NULL PRIMARY KEY,
-			title text not null,
-			time_start TIMESTAMP with time zone,
-			time_end TIMESTAMP with time zone,
-			description text,
-			user_id text,
-			notify_before TIMESTAMP with time zone
-		);`)
+	_, err = s.db.Exec("select count(*) from events")
+	if err == nil {
+		return nil
 	}
+	pqErr := err.(*pq.Error)
+	if pqErr.Code != "42P01" {
+		return err
+	}
+	s.db.DB.Exec(`CREATE TABLE events(
+		id text NOT NULL PRIMARY KEY,
+		title text not null,
+		time_start TIMESTAMP with time zone,
+		time_end TIMESTAMP with time zone,
+		description text,
+		user_id text,
+		notify_before TIMESTAMP with time zone,
+		notified BIT
+	);`)
 	return nil
 }
 
