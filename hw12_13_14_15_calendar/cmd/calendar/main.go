@@ -20,6 +20,7 @@ import (
 	"github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/storage"
 	memorystorage "github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/storage/memory"
 	sqlstorage "github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/storage/sql"
+	"github.com/brisk84/home_work/hw12_13_14_15_calendar/internal/ver"
 	"github.com/spf13/viper"
 )
 
@@ -34,7 +35,7 @@ func main() {
 	flag.Parse()
 
 	if flag.Arg(0) == "version" {
-		printVersion()
+		ver.PrintVersion()
 		return
 	}
 
@@ -60,12 +61,15 @@ func main() {
 
 	logg := logger.New(cfg.Logger.Path, cfg.Logger.Level)
 
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	defer cancel()
+
 	var stor storage.Calendar
 	if cfg.App.Storage == "memory" {
 		stor = memorystorage.New()
 	} else {
 		stor = sqlstorage.New(cfg.Database.DBType, cfg.Database.ConnStr, cfg.Database.MaxConns)
-		err := stor.(*sqlstorage.Storage).Connect(context.TODO())
+		err := stor.(*sqlstorage.Storage).Connect(ctx)
 		if err != nil {
 			logg.Error("Can't connect to dabatase")
 			return
@@ -75,9 +79,6 @@ func main() {
 	calendar := app.New(logg, &stor)
 	httpServer := internalhttp.NewServer(logg, calendar, net.JoinHostPort(cfg.HTTPServer.Host, cfg.HTTPServer.Port))
 	grpcServer := internalgrpc.NewServer(logg, calendar, net.JoinHostPort(cfg.GrpcServer.Host, cfg.GrpcServer.Port))
-
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
-	defer cancel()
 
 	go func() {
 		<-ctx.Done()

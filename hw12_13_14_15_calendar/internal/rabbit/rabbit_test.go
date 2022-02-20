@@ -65,3 +65,18 @@ package rabbit
 // 	// log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
 // 	// <-forever
 // }
+
+// func TestRabbit(t *testing.T) {
+// 	url := "amqp://guest:guest@localhost:5672/"
+// 	r := NewRabbit(url)
+// 	err := r.Connect()
+// 	require.NoError(t, err)
+// 	err = r.Send([]byte("Test123"))
+// 	require.NoError(t, err)
+// 	ch, err := r.Get()
+// 	require.NoError(t, err)
+
+// 	for d := range ch {
+// 		log.Printf("Received a message: %s\n", d.Body)
+// 	}
+// }

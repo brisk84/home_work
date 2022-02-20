@@ -6,7 +6,8 @@ CREATE TABLE events(
     time_end TIMESTAMP with time zone,
     description text,
     user_id text,
-    notify_before TIMESTAMP with time zone
+    notify_before TIMESTAMP with time zone,
+    notified BIT
 );
 
 -- +goose Down

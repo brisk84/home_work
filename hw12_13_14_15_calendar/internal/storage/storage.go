@@ -1,6 +1,9 @@
 package storage
 
-import "errors"
+import (
+	"context"
+	"errors"
+)
 
 var (
 	ErrDateBusy = errors.New("date is busy")
@@ -9,9 +12,9 @@ var (
 )
 
 type Calendar interface {
-	AddEvent(event Event) error
-	EditEvent(event Event) error
-	GetEvent(id string) (Event, error)
-	DeleteEvent(id string) error
-	ListEvents() []Event
+	AddEvent(ctx context.Context, event Event) error
+	EditEvent(ctx context.Context, event Event) error
+	GetEvent(ctx context.Context, id string) (Event, error)
+	DeleteEvent(ctx context.Context, id string) error
+	ListEvents(ctx context.Context) []Event
 }

@@ -1,6 +1,7 @@
 package memorystorage
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -16,17 +17,17 @@ func New() *Storage {
 	return &Storage{events: make(map[string]storage.Event)}
 }
 
-func (s *Storage) AddEvent(event storage.Event) error {
+func (s *Storage) AddEvent(ctx context.Context, event storage.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if err := s.CheckEvent(event); err != nil {
+	if err := s.CheckEvent(ctx, event); err != nil {
 		return err
 	}
 	s.events[event.ID] = event
 	return nil
 }
 
-func (s *Storage) EditEvent(event storage.Event) error {
+func (s *Storage) EditEvent(ctx context.Context, event storage.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if _, ok := s.events[event.ID]; !ok {
@@ -44,7 +45,7 @@ func (s *Storage) EditEvent(event storage.Event) error {
 	return nil
 }
 
-func (s *Storage) CheckEvent(event storage.Event) error {
+func (s *Storage) CheckEvent(ctx context.Context, event storage.Event) error {
 	var err error
 	if _, ok := s.events[event.ID]; ok {
 		err = storage.ErrUUIDBusy
@@ -57,7 +58,7 @@ func (s *Storage) CheckEvent(event storage.Event) error {
 	return err
 }
 
-func (s *Storage) GetEvent(id string) (storage.Event, error) {
+func (s *Storage) GetEvent(ctx context.Context, id string) (storage.Event, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	if ev, ok := s.events[id]; ok {
@@ -66,7 +67,7 @@ func (s *Storage) GetEvent(id string) (storage.Event, error) {
 	return storage.Event{}, storage.ErrNotFound
 }
 
-func (s *Storage) DeleteEvent(id string) error {
+func (s *Storage) DeleteEvent(ctx context.Context, id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if _, ok := s.events[id]; !ok {
@@ -76,7 +77,7 @@ func (s *Storage) DeleteEvent(id string) error {
 	return nil
 }
 
-func (s *Storage) ListEvents() []storage.Event {
+func (s *Storage) ListEvents(ctx context.Context) []storage.Event {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	ret := make([]storage.Event, len(s.events))
