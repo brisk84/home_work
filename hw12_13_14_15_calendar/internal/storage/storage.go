@@ -16,5 +16,8 @@ type Calendar interface {
 	EditEvent(ctx context.Context, event Event) error
 	GetEvent(ctx context.Context, id string) (Event, error)
 	DeleteEvent(ctx context.Context, id string) error
-	ListEvents(ctx context.Context) []Event
+	GetEventsOnDay(ctx context.Context, day string) ([]Event, error)
+	GetEventsOnWeek(ctx context.Context, day string) ([]Event, error)
+	GetEventsOnMonth(ctx context.Context, month string) ([]Event, error)
+	ListEvents(ctx context.Context) ([]Event, error)
 }

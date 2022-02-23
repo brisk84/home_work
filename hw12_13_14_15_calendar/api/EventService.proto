@@ -29,10 +29,18 @@ message Error {
     string error = 1;
 }
 
+message Day {
+    string day = 1;
+}
+
 service Calendar {
     rpc AddEvent (Event) returns (Error) {}
     rpc GetEvent (EventID) returns (Event) {}
     rpc EditEvent (Event) returns (Error) {}
     rpc DeleteEvent (EventID) returns (Error) {}
     rpc ListEvents (google.protobuf.Empty) returns (Events) {}
+    rpc GetEventsOnDay (Day) returns (Events) {}
+    rpc GetEventsOnWeek (Day) returns (Events) {}
+    rpc GetEventsOnMonth (Day) returns (Events) {}
+
 }

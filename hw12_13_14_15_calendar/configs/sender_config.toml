@@ -4,3 +4,8 @@ path = "stdout"
 
 [rabbit]
 url = "amqp://guest:guest@localhost:5672/"
+
+[database]
+db_type = "postgres"
+conn_str = "postgresql://localhost/calendar?user=postgres&password=sqlSync24&sslmode=disable"
+max_conns = 20

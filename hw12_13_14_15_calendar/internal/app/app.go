@@ -38,5 +38,20 @@ func (a *App) DeleteEvent(ctx context.Context, id string) error {
 
 func (a *App) ListEvents(ctx context.Context) ([]storage.Event, error) {
 	stor := *a.stor
-	return stor.ListEvents(ctx), nil
+	return stor.ListEvents(ctx)
+}
+
+func (a *App) GetEventsOnDay(ctx context.Context, day string) ([]storage.Event, error) {
+	stor := *a.stor
+	return stor.GetEventsOnDay(ctx, day)
+}
+
+func (a *App) GetEventsOnWeek(ctx context.Context, day string) ([]storage.Event, error) {
+	stor := *a.stor
+	return stor.GetEventsOnWeek(ctx, day)
+}
+
+func (a *App) GetEventsOnMonth(ctx context.Context, day string) ([]storage.Event, error) {
+	stor := *a.stor
+	return stor.GetEventsOnMonth(ctx, day)
 }

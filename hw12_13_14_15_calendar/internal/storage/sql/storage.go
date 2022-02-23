@@ -78,7 +78,7 @@ func (s *Storage) GetEvent(ctx context.Context, id string) (storage.Event, error
 		return storage.Event{}, err
 	}
 	if len(ev) < 1 {
-		return storage.Event{}, nil
+		return storage.Event{}, storage.ErrNotFound
 	}
 	ev[0].TimeStart = ev[0].TimeStart.Local()
 	ev[0].TimeEnd = ev[0].TimeEnd.Local()
@@ -110,7 +110,10 @@ func (s *Storage) SetNotified(ctx context.Context, event storage.Event) error {
 }
 
 func (s *Storage) EditEvent(ctx context.Context, event storage.Event) error {
-	evs := s.ListEvents(ctx)
+	evs, err := s.ListEvents(ctx)
+	if err != nil {
+		return err
+	}
 	for _, v := range evs {
 		if v.ID == event.ID {
 			continue
@@ -136,18 +139,102 @@ func (s *Storage) DeleteEvent(ctx context.Context, id string) error {
 	return err
 }
 
-func (s *Storage) ListEvents(ctx context.Context) []storage.Event {
+func (s *Storage) ListEvents(ctx context.Context) ([]storage.Event, error) {
 	var evs []storage.Event
 	err := s.db.SelectContext(ctx, &evs, "select * from events")
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	for _, ev := range evs {
 		ev.TimeStart = ev.TimeStart.Local()
 		ev.TimeEnd = ev.TimeEnd.Local()
 		ev.NotifyBefore = ev.NotifyBefore.Local()
 	}
-	return evs
+	return evs, nil
+}
+
+func (s *Storage) GetEventsOnDay(ctx context.Context, day string) ([]storage.Event, error) {
+	var evs []storage.Event
+	dStart, err := time.Parse("2006-01-02", day)
+	if err != nil {
+		return nil, err
+	}
+	dEnd := dStart.AddDate(0, 0, 1)
+	err = s.db.SelectContext(ctx, &evs, "select * from events where time_start>$1 and time_start<$2", dStart, dEnd)
+	if err != nil {
+		return nil, err
+	}
+	for _, ev := range evs {
+		ev.TimeStart = ev.TimeStart.Local()
+		ev.TimeEnd = ev.TimeEnd.Local()
+		ev.NotifyBefore = ev.NotifyBefore.Local()
+	}
+	return evs, nil
+}
+
+func GetDatesWeek(day string) (time.Time, time.Time, error) {
+	dateDay, err := time.Parse("2006-01-02", day)
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+	ret := []time.Time{}
+	year, week := dateDay.ISOWeek()
+	dateStart := dateDay.AddDate(0, 0, -7)
+	for i := 0; i < 15; i++ {
+		curDay := dateStart.AddDate(0, 0, i)
+		nYear, nWeek := curDay.ISOWeek()
+		if nYear == year && nWeek == week {
+			ret = append(ret, curDay)
+		}
+	}
+	return ret[0], ret[len(ret)-1], nil
+}
+
+func (s *Storage) GetEventsOnWeek(ctx context.Context, day string) ([]storage.Event, error) {
+	var evs []storage.Event
+	dStart, dEnd, err := GetDatesWeek(day)
+	if err != nil {
+		return nil, err
+	}
+	err = s.db.SelectContext(ctx, &evs, "select * from events where time_start>$1 and time_start<$2", dStart, dEnd)
+	if err != nil {
+		return nil, err
+	}
+	for _, ev := range evs {
+		ev.TimeStart = ev.TimeStart.Local()
+		ev.TimeEnd = ev.TimeEnd.Local()
+		ev.NotifyBefore = ev.NotifyBefore.Local()
+	}
+	return evs, nil
+}
+
+func GetDatesMonth(day string) (time.Time, time.Time, error) {
+	dateDay, err := time.Parse("2006-01-02", day)
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+	dStart := time.Date(dateDay.Year(), dateDay.Month(), 1, 0, 0, 0, 0, time.Local)
+	dEnd := time.Date(dateDay.Year(), dateDay.Month()+1, 1, 0, 0, 0, 0, time.Local)
+	dEnd = dEnd.AddDate(0, 0, -1)
+	return dStart, dEnd, nil
+}
+
+func (s *Storage) GetEventsOnMonth(ctx context.Context, day string) ([]storage.Event, error) {
+	var evs []storage.Event
+	dStart, dEnd, err := GetDatesMonth(day)
+	if err != nil {
+		return nil, err
+	}
+	err = s.db.SelectContext(ctx, &evs, "select * from events where time_start>$1 and time_start<$2", dStart, dEnd)
+	if err != nil {
+		return nil, err
+	}
+	for _, ev := range evs {
+		ev.TimeStart = ev.TimeStart.Local()
+		ev.TimeEnd = ev.TimeEnd.Local()
+		ev.NotifyBefore = ev.NotifyBefore.Local()
+	}
+	return evs, nil
 }
 
 func (s *Storage) ClearCalendar(ctx context.Context) error {

@@ -27,7 +27,6 @@ import (
 var configFile string
 
 func init() {
-	// flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
 	flag.StringVar(&configFile, "config", "configs/config.toml", "Path to configuration file")
 }
 
@@ -100,7 +99,6 @@ func main() {
 		if err := httpServer.Start(ctx); err != nil {
 			logg.Error(err.Error())
 			cancel()
-			// os.Exit(1) //nolint:gocritic
 		}
 	}()
 	if err := grpcServer.Start(ctx); err != nil {

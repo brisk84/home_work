@@ -7,7 +7,7 @@ CREATE TABLE events(
     description text,
     user_id text,
     notify_before TIMESTAMP with time zone,
-    notified BIT
+    notified boolean
 );
 
 -- +goose Down

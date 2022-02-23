@@ -88,7 +88,7 @@ func TestStorage(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEqual(t, ev1, ev001)
 
-	evs1 := st.ListEvents(ctx)
+	evs1, _ := st.ListEvents(ctx)
 	require.Equal(t, 3, len(evs1))
 
 	err = st.DeleteEvent(ctx, id2)
@@ -105,7 +105,7 @@ func TestStorage(t *testing.T) {
 	err = st.EditEvent(ctx, ev3)
 	require.ErrorIs(t, err, storage.ErrDateBusy)
 
-	evs2 := st.ListEvents(ctx)
+	evs2, _ := st.ListEvents(ctx)
 	require.Equal(t, 2, len(evs2))
 }
 
@@ -135,7 +135,7 @@ func TestStorageConcurency(t *testing.T) {
 		}(i)
 	}
 	wg.Wait()
-	evs := st.ListEvents(ctx)
+	evs, _ := st.ListEvents(ctx)
 	require.Equal(t, threadsCount, len(evs))
 
 	wg.Add(2 * threadsCount)
@@ -174,6 +174,6 @@ func TestStorageConcurency(t *testing.T) {
 		}(i)
 	}
 	wg.Wait()
-	evs = st.ListEvents(ctx)
+	evs, _ = st.ListEvents(ctx)
 	require.Equal(t, 0, len(evs))
 }
