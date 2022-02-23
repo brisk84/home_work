@@ -34,7 +34,8 @@ func (s *Storage) Connect(ctx context.Context) error {
 	if err == nil {
 		return nil
 	}
-	if pqErr, ok := err.(*pq.Error); ok {
+	var pqErr *pq.Error
+	if errors.As(err, &pqErr) {
 		if pqErr.Code == "42P01" {
 			s.db.DB.Exec(`CREATE TABLE events(
 				id text NOT NULL PRIMARY KEY,
