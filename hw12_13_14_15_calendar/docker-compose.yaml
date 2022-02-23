@@ -20,6 +20,26 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: sqlSync24
 
+  rabbitmq:
+    restart: always
+    container_name: rabbitmq
+    image: rabbitmq
+    # image: rabbitmq:3.8.7-management-alpine
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:15672"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 10
+    depends_on:
+      - db
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - 5672:5672
+      - 15672:15672
+    network_mode: host
+
   calendar:
     restart: always
     build:
@@ -27,27 +47,30 @@ services:
       dockerfile: Dockerfile_calendar
     command: sh -c "sleep 10 && /opt/calendar/calendar-app -config /etc/calendar/config.toml"
     ports:
-      # - 4242:4242
+      - 4242:4242
       - 4343:4343
     network_mode: host
     depends_on:
       - db
 
-#   calendar:
-#     restart: always
-#     build:
-#       context: ./
-#       dockerfile: Dockerfile-calendar
-#     depends_on:
-#       - rabbitmq
-#       - db
-#     ports:
-#       - 4444:4444
-#       - 4445:4445
-#       - 4446:4446
-#     environment:
-#       DSN: ${DSN}
-#       RABBIT_ADDR: ${RABBIT_ADDR}
+  scheduler:
+    restart: always
+    build:
+      context: ./
+      dockerfile: Dockerfile_scheduler
+    network_mode: host
+    depends_on:
+      - rabbitmq
+      - db
+
+  sender:
+    restart: always
+    build:
+      context: ./
+      dockerfile: Dockerfile_sender
+    network_mode: host
+    depends_on:
+      - rabbitmq
 
   client:
     restart: always

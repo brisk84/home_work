@@ -34,21 +34,22 @@ func (s *Storage) Connect(ctx context.Context) error {
 	if err == nil {
 		return nil
 	}
-	pqErr := err.(*pq.Error)
-	if pqErr.Code != "42P01" {
-		return err
+	if pqErr, ok := err.(*pq.Error); ok {
+		if pqErr.Code == "42P01" {
+			s.db.DB.Exec(`CREATE TABLE events(
+				id text NOT NULL PRIMARY KEY,
+				title text not null,
+				time_start TIMESTAMP with time zone,
+				time_end TIMESTAMP with time zone,
+				description text,
+				user_id text,
+				notify_before TIMESTAMP with time zone,
+				notified BOOLEAN default false
+			);`)
+		}
+		return nil
 	}
-	s.db.DB.Exec(`CREATE TABLE events(
-		id text NOT NULL PRIMARY KEY,
-		title text not null,
-		time_start TIMESTAMP with time zone,
-		time_end TIMESTAMP with time zone,
-		description text,
-		user_id text,
-		notify_before TIMESTAMP with time zone,
-		notified BIT
-	);`)
-	return nil
+	return err
 }
 
 func (s *Storage) Close() error {
