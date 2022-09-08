@@ -75,7 +75,7 @@ func main() {
 		}
 	}
 
-	calendar := app.New(logg, &stor)
+	calendar := app.New(logg, stor)
 	httpServer := internalhttp.NewServer(logg, calendar, net.JoinHostPort(cfg.HTTPServer.Host, cfg.HTTPServer.Port))
 	grpcServer := internalgrpc.NewServer(logg, calendar, net.JoinHostPort(cfg.GrpcServer.Host, cfg.GrpcServer.Port))
 

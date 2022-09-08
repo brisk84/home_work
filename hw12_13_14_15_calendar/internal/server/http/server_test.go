@@ -3,7 +3,7 @@ package internalhttp
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -31,8 +31,9 @@ func AddEvent(t *testing.T) {
 	w := httptest.NewRecorder()
 	srv.AddEvent(w, req)
 	res := w.Result()
+	require.Equal(t, http.StatusOK, res.StatusCode)
 	defer res.Body.Close()
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
 	require.Equal(t, "ok", string(data))
 }
@@ -43,8 +44,9 @@ func GetEvent(t *testing.T) {
 	w := httptest.NewRecorder()
 	srv.GetEvent(w, req)
 	res := w.Result()
+	require.Equal(t, http.StatusOK, res.StatusCode)
 	defer res.Body.Close()
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
 	getEv := storage.Event{}
 	err = json.Unmarshal(data, &getEv)
@@ -61,8 +63,9 @@ func EditEvent(t *testing.T) {
 	w := httptest.NewRecorder()
 	srv.EditEvent(w, req)
 	res := w.Result()
+	require.Equal(t, http.StatusOK, res.StatusCode)
 	defer res.Body.Close()
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
 	require.Equal(t, "ok", string(data))
 }
@@ -75,8 +78,9 @@ func GetEvent2(t *testing.T) {
 	w := httptest.NewRecorder()
 	srv.GetEvent(w, req)
 	res := w.Result()
+	require.Equal(t, http.StatusOK, res.StatusCode)
 	defer res.Body.Close()
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
 	err = json.Unmarshal(data, &getEv)
 	require.NoError(t, err)
@@ -110,7 +114,7 @@ func TestServer(t *testing.T) {
 
 	logg = logger.New("stdout", "INFO")
 	stor = memorystorage.New()
-	calendar = app.New(logg, &stor)
+	calendar = app.New(logg, stor)
 	srv = NewServer(logg, calendar, "")
 
 	AddEvent(t)
@@ -136,8 +140,9 @@ func TestServer(t *testing.T) {
 	w := httptest.NewRecorder()
 	srv.AddEvent(w, req)
 	res := w.Result()
+	require.Equal(t, http.StatusConflict, res.StatusCode)
 	defer res.Body.Close()
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
 	require.Contains(t, string(data), "date is busy")
 
@@ -154,8 +159,9 @@ func TestServer(t *testing.T) {
 	w = httptest.NewRecorder()
 	srv.AddEvent(w, req)
 	res = w.Result()
+	require.Equal(t, http.StatusOK, res.StatusCode)
 	defer res.Body.Close()
-	data, err = ioutil.ReadAll(res.Body)
+	data, err = io.ReadAll(res.Body)
 	require.NoError(t, err)
 	require.Equal(t, "ok", string(data))
 
@@ -163,8 +169,9 @@ func TestServer(t *testing.T) {
 	w = httptest.NewRecorder()
 	srv.ListEvents(w, req)
 	res = w.Result()
+	require.Equal(t, http.StatusOK, res.StatusCode)
 	defer res.Body.Close()
-	data, err = ioutil.ReadAll(res.Body)
+	data, err = io.ReadAll(res.Body)
 	require.NoError(t, err)
 
 	ev3s := storage.Event{}
@@ -181,8 +188,9 @@ func TestServer(t *testing.T) {
 	w = httptest.NewRecorder()
 	srv.DeleteEvent(w, req)
 	res = w.Result()
+	require.Equal(t, http.StatusOK, res.StatusCode)
 	defer res.Body.Close()
-	data, err = ioutil.ReadAll(res.Body)
+	data, err = io.ReadAll(res.Body)
 	require.NoError(t, err)
 	require.Equal(t, "ok", string(data))
 
@@ -190,8 +198,9 @@ func TestServer(t *testing.T) {
 	w = httptest.NewRecorder()
 	srv.ListEvents(w, req)
 	res = w.Result()
+	require.Equal(t, http.StatusOK, res.StatusCode)
 	defer res.Body.Close()
-	data, err = ioutil.ReadAll(res.Body)
+	data, err = io.ReadAll(res.Body)
 	require.NoError(t, err)
 
 	evs2 := []storage.Event{}
