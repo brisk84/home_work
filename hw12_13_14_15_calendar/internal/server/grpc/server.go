@@ -26,7 +26,18 @@ type Logger interface {
 	Error(msg string)
 }
 
-func NewServer(logger Logger, appl *app.App, addr string) *Server {
+type Application interface {
+	AddEvent(context.Context, storage.Event) error
+	GetEvent(context.Context, string) (storage.Event, error)
+	EditEvent(context.Context, storage.Event) error
+	DeleteEvent(context.Context, string) error
+	ListEvents(context.Context) ([]storage.Event, error)
+	GetEventsOnDay(context.Context, string) ([]storage.Event, error)
+	GetEventsOnWeek(context.Context, string) ([]storage.Event, error)
+	GetEventsOnMonth(context.Context, string) ([]storage.Event, error)
+}
+
+func NewServer(logger Logger, app Application, addr string) *Server {
 	server := &Server{
 		addr: addr,
 		logg: logger,
@@ -117,6 +128,39 @@ func (s *Server) DeleteEvent(ctx context.Context, eventID *pb.EventID) (*pb.Erro
 func (s *Server) ListEvents(ctx context.Context, empty *emptypb.Empty) (*pb.Events, error) {
 	s.logg.Info("gprc: ListEvents")
 	evs, err := s.appl.ListEvents(ctx)
+	res := []*pb.Event{}
+	for _, ev := range evs {
+		res = append(res, StorageToPb(ev))
+	}
+	events := &pb.Events{Events: res}
+	return events, err
+}
+
+func (s *Server) GetEventsOnDay(ctx context.Context, day *pb.Day) (*pb.Events, error) {
+	s.logg.Info("gprc: GetEventsOnDay")
+	evs, err := s.app.GetEventsOnDay(ctx, day.Day)
+	res := []*pb.Event{}
+	for _, ev := range evs {
+		res = append(res, StorageToPb(ev))
+	}
+	events := &pb.Events{Events: res}
+	return events, err
+}
+
+func (s *Server) GetEventsOnWeek(ctx context.Context, day *pb.Day) (*pb.Events, error) {
+	s.logg.Info("gprc: GetEventsOnWeek")
+	evs, err := s.app.GetEventsOnWeek(ctx, day.Day)
+	res := []*pb.Event{}
+	for _, ev := range evs {
+		res = append(res, StorageToPb(ev))
+	}
+	events := &pb.Events{Events: res}
+	return events, err
+}
+
+func (s *Server) GetEventsOnMonth(ctx context.Context, day *pb.Day) (*pb.Events, error) {
+	s.logg.Info("gprc: GetEventsOnMonth")
+	evs, err := s.app.GetEventsOnMonth(ctx, day.Day)
 	res := []*pb.Event{}
 	for _, ev := range evs {
 		res = append(res, StorageToPb(ev))

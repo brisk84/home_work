@@ -1,6 +1,7 @@
 package memorystorage
 
 import (
+	"context"
 	"strconv"
 	"sync"
 	"testing"
@@ -17,6 +18,8 @@ func TestStorage(t *testing.T) {
 	id1 := uuid.New().String()
 	id2 := uuid.New().String()
 	id3 := uuid.New().String()
+
+	ctx := context.Background()
 
 	ev1 := storage.Event{
 		ID:           id1,
@@ -46,63 +49,63 @@ func TestStorage(t *testing.T) {
 		NotifyBefore: time.Date(2022, 1, 1, 14, 0, 0, 0, time.Local).Add(-15 * time.Minute),
 	}
 
-	err := st.AddEvent(ev1)
+	err := st.AddEvent(ctx, ev1)
 	require.NoError(t, err)
 
-	err = st.AddEvent(ev1)
+	err = st.AddEvent(ctx, ev1)
 	errDate := storage.ErrDateBusy
 	errUUID := storage.ErrUUIDBusy
 	require.ErrorAs(t, err, &errDate)
 	require.ErrorAs(t, err, &errUUID)
 
-	err = st.AddEvent(ev2)
+	err = st.AddEvent(ctx, ev2)
 	require.ErrorIs(t, err, storage.ErrUUIDBusy)
 
 	ev2.ID = id2
-	err = st.AddEvent(ev2)
+	err = st.AddEvent(ctx, ev2)
 	require.NoError(t, err)
 
-	err = st.AddEvent(ev3)
+	err = st.AddEvent(ctx, ev3)
 	require.NoError(t, err)
 
-	ev01, err := st.GetEvent(id1)
+	ev01, err := st.GetEvent(ctx, id1)
 	require.NoError(t, err)
 	require.Equal(t, ev1, ev01)
 
-	ev02, err := st.GetEvent(id2)
+	ev02, err := st.GetEvent(ctx, id2)
 	require.NoError(t, err)
 	require.Equal(t, ev2, ev02)
 
-	ev03, err := st.GetEvent(id3)
+	ev03, err := st.GetEvent(ctx, id3)
 	require.NoError(t, err)
 	require.Equal(t, ev3, ev03)
 
 	ev01.Title = "First event (edited)"
-	err = st.EditEvent(ev01)
+	err = st.EditEvent(ctx, ev01)
 	require.NoError(t, err)
 
-	ev001, err := st.GetEvent(id1)
+	ev001, err := st.GetEvent(ctx, id1)
 	require.NoError(t, err)
 	require.NotEqual(t, ev1, ev001)
 
-	evs1 := st.ListEvents()
+	evs1, _ := st.ListEvents(ctx)
 	require.Equal(t, 3, len(evs1))
 
-	err = st.DeleteEvent(id2)
+	err = st.DeleteEvent(ctx, id2)
 	require.NoError(t, err)
 
-	err = st.DeleteEvent(id2)
+	err = st.DeleteEvent(ctx, id2)
 	require.ErrorIs(t, err, storage.ErrNotFound)
 
 	ev2.Title = "Second event (edited)"
-	err = st.EditEvent(ev2)
+	err = st.EditEvent(ctx, ev2)
 	require.ErrorIs(t, err, storage.ErrNotFound)
 
 	ev3.TimeStart = ev1.TimeStart
-	err = st.EditEvent(ev3)
+	err = st.EditEvent(ctx, ev3)
 	require.ErrorIs(t, err, storage.ErrDateBusy)
 
-	evs2 := st.ListEvents()
+	evs2, _ := st.ListEvents(ctx)
 	require.Equal(t, 2, len(evs2))
 }
 
@@ -111,6 +114,8 @@ func TestStorageConcurency(t *testing.T) {
 
 	wg := sync.WaitGroup{}
 	threadsCount := 1000
+
+	ctx := context.Background()
 
 	wg.Add(threadsCount)
 	for i := 0; i < threadsCount; i++ {
@@ -125,12 +130,12 @@ func TestStorageConcurency(t *testing.T) {
 				UserID:       uuid.New().String(),
 				NotifyBefore: time.Date(2022, 1, 1, 13, 0, 0, 0, time.Local).Add(-15 * time.Minute),
 			}
-			err := st.AddEvent(ev1)
+			err := st.AddEvent(ctx, ev1)
 			require.NoError(t, err)
 		}(i)
 	}
 	wg.Wait()
-	evs := st.ListEvents()
+	evs, _ := st.ListEvents(ctx)
 	require.Equal(t, threadsCount, len(evs))
 
 	wg.Add(2 * threadsCount)
@@ -139,12 +144,12 @@ func TestStorageConcurency(t *testing.T) {
 			defer wg.Done()
 			ev := evs[i]
 			ev.Title += "[edited]"
-			err := st.EditEvent(ev)
+			err := st.EditEvent(ctx, ev)
 			require.NoError(t, err)
 		}(i)
 		go func(i int) {
 			defer wg.Done()
-			_, err := st.GetEvent(evs[i].ID)
+			_, err := st.GetEvent(ctx, evs[i].ID)
 			require.NoError(t, err)
 		}(i)
 	}
@@ -154,7 +159,7 @@ func TestStorageConcurency(t *testing.T) {
 	for i := 0; i < threadsCount; i++ {
 		go func(i int) {
 			defer wg.Done()
-			ev, err := st.GetEvent(evs[i].ID)
+			ev, err := st.GetEvent(ctx, evs[i].ID)
 			require.NoError(t, err)
 			require.NotEqual(t, ev, evs[i])
 		}(i)
@@ -165,10 +170,10 @@ func TestStorageConcurency(t *testing.T) {
 	for i := 0; i < threadsCount; i++ {
 		go func(i int) {
 			defer wg.Done()
-			st.DeleteEvent(evs[i].ID)
+			st.DeleteEvent(ctx, evs[i].ID)
 		}(i)
 	}
 	wg.Wait()
-	evs = st.ListEvents()
+	evs, _ = st.ListEvents(ctx)
 	require.Equal(t, 0, len(evs))
 }

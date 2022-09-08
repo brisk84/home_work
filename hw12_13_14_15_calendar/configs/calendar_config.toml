@@ -1,0 +1,20 @@
+[logger]
+level = "INFO"
+path = "stdout"
+
+[database]
+db_type = "postgres"
+conn_str = "postgresql://localhost/calendar?user=postgres&password=sqlSync24&sslmode=disable"
+max_conns = 20
+
+[http_server]
+host = "localhost"
+port = "4242"
+
+[grpc_server]
+host = "localhost"
+port = "4343"
+
+[app]
+storage = "database"
+#storage = "memory"

@@ -1,0 +1,77 @@
+version: "3"
+
+services:
+  db:
+    restart: always
+    container_name: db
+    image: postgres
+    # healthcheck:
+    #   test: ["CMD-SHELL", "pg_isready -U postgres"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 10
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./migrations/database:/docker-entrypoint-initdb.d
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: sqlSync24
+
+  rabbitmq:
+    restart: always
+    container_name: rabbitmq
+    image: rabbitmq
+    depends_on:
+      - db
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - 5672:5672
+      - 15672:15672
+    network_mode: host
+
+  calendar:
+    restart: always
+    container_name: calendar
+    build:
+      context: .
+      dockerfile: Dockerfile_calendar
+    command: sh -c "sleep 10 && /opt/calendar/calendar-app -config /etc/calendar/config.toml"
+    ports:
+      - 4343:4343
+      - 4242:4242
+    network_mode: host
+    depends_on:
+      - db
+
+  scheduler:
+    restart: always
+    container_name: scheduler
+    build:
+      context: ./
+      dockerfile: Dockerfile_scheduler
+    command: sh -c "sleep 10 && /opt/scheduler/scheduler-app -config /etc/scheduler/config.toml"
+    network_mode: host
+    depends_on:
+      - rabbitmq
+      - db
+
+  sender:
+    restart: always
+    container_name: sender
+    build:
+      context: ./
+      dockerfile: Dockerfile_sender
+    command: sh -c "sleep 10 && /opt/sender/sender-app -config /etc/sender/config.toml"
+    network_mode: host
+    depends_on:
+      - rabbitmq
+    environment:
+      RABBIT_URL: ${RABBIT_URL}
+
+volumes:
+  pgdata:
